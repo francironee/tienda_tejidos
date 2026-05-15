@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% block title %}{{ item.nombre }} — Tejidos Margot{% endblock %}
+{% block meta_description %}{{ item.desc }} Tejido a mano por Tejidos Margot. Envíos a todo Argentina.{% endblock %}
+{% block canonical_path %}/producto/{{ item.nombre }}{% endblock %}
+{% block og_title %}{{ item.nombre }} — Tejidos Margot{% endblock %}
+{% block og_description %}{{ item.desc }} Precio: ${{ "{:,.0f}".format(item.precio).replace(',', '.') }}{% endblock %}
+{% block og_image %}{{ request.url_root }}static/{{ item.img }}{% endblock %}
+{% block og_path %}/producto/{{ item.nombre }}{% endblock %}
+
+{% block content %}
+<section class="producto-detalle fade-up">
+    <div class="detalle-boutique-container">
+        
+        <!-- Mitad izquierda: Foto principal y miniaturas -->
+        <div class="detalle-boutique-img-section">
+            <div id="main-image" class="detalle-boutique-main-img" style="background-image: url('{{ url_for('static', filename=item.img) }}');" onclick="openLightbox()"></div>
+            {% if item.imagenes_extra %}
+            <div class="detalle-boutique-thumbnails">
+                <div class="boutique-thumbnail active" style="background-image: url('{{ url_for('static', filename=item.img) }}');" onclick="changeMainImage(this, '{{ url_for('static', filename=item.img) }}', 0)"></div>
+                {% for img_extra in item.imagenes_extra %}
+                <div class="boutique-thumbnail" style="background-image: url('{{ url_for('static', filename=img_extra.filename) }}');" onclick="changeMainImage(this, '{{ url_for('static', filename=img_extra.filename) }}', {{ loop.index }})"></div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Mitad derecha: Información y acciones -->
+        <div class="detalle-boutique-info-section">
+            <div class="boutique-breadcrumb">
+                <a href="{{ url_for('productos') }}">CATÁLOGO</a> <span class="separator">/</span> <span>{{ categoria | upper }}</span>
+            </div>
+            
+            <h1 class="boutique-title">{{ item.nombre }}</h1>
+            <p class="boutique-price">$ {{ "{:,.0f}".format(item.precio).replace(',', '.') }}</p>
+            
+            <div class="boutique-stock-status {% if item.stock == 0 %}out-of-stock{% endif %}">
+                {% if item.stock > 0 %}EN STOCK{% else %}SIN STOCK{% endif %}
+            </div>
+
+            <div class="boutique-description">
+                <p>{{ item.desc }}</p>
+            </div>
+
+            {% if item.colores %}
+            <div class="boutique-colors">
+                <span class="color-label">Elige un color:</span>
+                <div class="color-swatches">
+                    {% for color in item.colores.split(',') %}
+                    <button class="color-swatch" onclick="selectColor(this, '{{ color.strip() }}')">{{ color.strip() }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            <input type="hidden" id="selected-color-input" value="">
+
+            <div class="boutique-accordion">
+                <div class="accordion-item">
+                    <button class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>Medidas de la prenda</span>
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <div class="accordion-content">
+                        <p>{{ item.materiales }}</p>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <button class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>Envíos y Retiros</span>
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <div class="accordion-content">
+                        <p><strong>Envíos:</strong> A todo el país. El costo varía según destino y se pacta por privado.</p>
+                        <p><strong>Retiro en showroom:</strong> Sin cargo, en Villa Pueyrredón, CABA. Te pasamos la dirección una vez confirmada la compra.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="boutique-actions">
+                {% if item.stock > 0 %}
+                <button type="button" id="btn-add-cart" class="btn-boutique-add" onclick="addToCartAjax('{{ item.nombre }}', {{ 'true' if item.colores else 'false' }})">AÑADIR AL CARRITO</button>
+                {% else %}
+                <button type="button" class="btn-boutique-add disabled" disabled>SIN STOCK</button>
+                <a href="https://wa.me/5491125193017?text=Hola!%20Quiero%20encargar%20el%20tejido%20*{{ item.nombre | urlencode }}*%20que%20vi%20en%20la%20web.%20%C2%BFMe%20pueden%20avisar%20cuando%20haya%20disponibilidad%3F%20%F0%9F%A7%B6" target="_blank" class="btn-boutique-encargar">ENCARGAR ESTE TEJIDO</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if relacionados %}
+<section class="related-products-section">
+    <h3 class="related-products-title">También podría interesarte</h3>
+    <div class="related-catalogo">
+        {% for rel_item in relacionados %}
+        <a href="{{ url_for('producto_detalle', nombre=rel_item.nombre) }}" style="text-decoration: none; color: inherit;">
+            <div class="producto related-producto">
+                <div class="producto-img related-producto-img" style="background-image: url('{{ url_for('static', filename=rel_item.img) }}');"></div>
+                <div class="producto-info related-producto-info">
+                    <h3>{{ rel_item.nombre }}</h3>
+                    <p class="precio">$ {{ "{:,.0f}".format(rel_item.precio).replace(',', '.') }}</p>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- GA4 - Producto Visto -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'view_item', {
+                items: [{
+                    item_name: '{{ item.nombre }}',
+                    item_id: '{{ item.nombre }}',
+                    price: {{ item.precio }},
+                    item_category: '{{ categoria }}'
+                }]
+            });
+        }
+    });
+</script>
+
+<!-- Lightbox Modal -->
+<div id="lightbox-modal" class="lightbox-modal" onclick="closeLightbox(event)">
+    <span class="lightbox-close" onclick="closeLightbox(event)">&times;</span>
+    <img class="lightbox-content" id="lightbox-img">
+    <a class="lightbox-prev" onclick="changeLightboxImage(-1, event)">&#10094;</a>
+    <a class="lightbox-next" onclick="changeLightboxImage(1, event)">&#10095;</a>
+</div>
+
+<script>
+    const productImages = [
+        "{{ url_for('static', filename=item.img) }}"
+        {% if item.imagenes_extra %}
+        {% for img_extra in item.imagenes_extra %}
+        ,"{{ url_for('static', filename=img_extra.filename) }}"
+        {% endfor %}
+        {% endif %}
+    ];
+    let currentMainImageIndex = 0;
+
+    function changeMainImage(element, newUrl, index) {
+        document.getElementById('main-image').style.backgroundImage = 'url(' + newUrl + ')';
+        currentMainImageIndex = index;
+        
+        // Remove active class from all thumbnails
+        document.querySelectorAll('.boutique-thumbnail').forEach(thumb => {
+            thumb.classList.remove('active');
+        });
+        
+        // Add active class to clicked thumbnail
+        element.classList.add('active');
+    }
+
+    function toggleAccordion(element) {
+        const content = element.nextElementSibling;
+        const icon = element.querySelector('i');
+        
+        if (content.style.maxHeight) {
+            content.style.maxHeight = null;
+            element.classList.remove('active');
+            icon.classList.remove('fa-minus');
+            icon.classList.add('fa-plus');
+        } else {
+            // Optional: close other accordions
+            // document.querySelectorAll('.accordion-content').forEach(c => {
+            //     c.style.maxHeight = null;
+            //     c.previousElementSibling.classList.remove('active');
+            //     c.previousElementSibling.querySelector('i').className = 'fa-solid fa-plus';
+            // });
+
+            content.style.maxHeight = content.scrollHeight + "px";
+            element.classList.add('active');
+            icon.classList.remove('fa-plus');
+            icon.classList.add('fa-minus');
+        }
+    }
+
+    function openLightbox() {
+        const modal = document.getElementById('lightbox-modal');
+        const img = document.getElementById('lightbox-img');
+        const sourceImg = document.getElementById('main-image');
+        
+        img.src = productImages[currentMainImageIndex];
+        
+        const sourceRect = sourceImg.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        const sourceCenterX = sourceRect.left + (sourceRect.width / 2);
+        const sourceCenterY = sourceRect.top + (sourceRect.height / 2);
+        const viewportCenterX = viewportWidth / 2;
+        const viewportCenterY = viewportHeight / 2;
+        
+        const deltaX = sourceCenterX - viewportCenterX;
+        const deltaY = sourceCenterY - viewportCenterY;
+        
+        // Initial state
+        img.style.transition = 'none';
+        img.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.5)`;
+        
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        
+        // Force reflow
+        void img.offsetWidth;
+        
+        // Final state
+        img.style.transition = 'transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1)';
+        img.style.transform = 'translate(0, 0) scale(1)';
+    }
+
+    function closeLightbox(event) {
+        if (event.target.classList.contains('lightbox-modal') || event.target.classList.contains('lightbox-close')) {
+            const modal = document.getElementById('lightbox-modal');
+            const img = document.getElementById('lightbox-img');
+            const sourceImg = document.getElementById('main-image');
+            
+            const sourceRect = sourceImg.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            const sourceCenterX = sourceRect.left + (sourceRect.width / 2);
+            const sourceCenterY = sourceRect.top + (sourceRect.height / 2);
+            const viewportCenterX = viewportWidth / 2;
+            const viewportCenterY = viewportHeight / 2;
+            
+            const deltaX = sourceCenterX - viewportCenterX;
+            const deltaY = sourceCenterY - viewportCenterY;
+
+            img.style.transition = 'transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)';
+            img.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.5)`;
+            
+            modal.style.opacity = '0';
+            
+            setTimeout(() => {
+                modal.classList.remove('show');
+                modal.style.opacity = '';
+                document.body.style.overflow = 'auto';
+            }, 400);
+        }
+    }
+
+    function changeLightboxImage(direction, event) {
+        event.stopPropagation();
+        currentMainImageIndex += direction;
+        
+        if (currentMainImageIndex >= productImages.length) {
+            currentMainImageIndex = 0;
+        } else if (currentMainImageIndex < 0) {
+            currentMainImageIndex = productImages.length - 1;
+        }
+        
+        document.getElementById('lightbox-img').src = productImages[currentMainImageIndex];
+    }
+
+    function selectColor(btn, colorStr) {
+        document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+        btn.classList.add('selected');
+        document.getElementById('selected-color-input').value = colorStr;
+        
+        const addToCartBtn = document.getElementById('btn-add-cart');
+        if(addToCartBtn) {
+            addToCartBtn.textContent = 'AÑADIR AL CARRITO';
+            addToCartBtn.style.backgroundColor = 'var(--color-brown)';
+        }
+    }
+
+    function addToCartAjax(productoNombre, requiereColor) {
+        let colorSeleccionado = '';
+        if(requiereColor) {
+            colorSeleccionado = document.getElementById('selected-color-input').value;
+            if(!colorSeleccionado) {
+                const btn = document.getElementById('btn-add-cart');
+                btn.textContent = '¡SELECCIONA UN COLOR!';
+                btn.style.backgroundColor = '#a85454';
+                setTimeout(() => {
+                    btn.textContent = 'AÑADIR AL CARRITO';
+                    btn.style.backgroundColor = 'var(--color-brown)';
+                }, 2000);
+                return;
+            }
+        }
+        
+        const btn = document.getElementById('btn-add-cart');
+        const originalText = btn.textContent;
+        btn.textContent = 'AGREGANDO...';
+        
+        fetch('/add_to_cart/' + encodeURIComponent(productoNombre), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                color: colorSeleccionado,
+                quantity: 1
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                const badge = document.querySelector('.cart-badge');
+                if(badge) badge.textContent = data.cart_count;
+                
+                btn.textContent = '¡AGREGADO!';
+                btn.style.backgroundColor = 'var(--color-sage)';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.backgroundColor = 'var(--color-brown)';
+                }, 2000);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            btn.textContent = 'ERROR AL AGREGAR';
+        });
+    }
+</script>
+{% endblock %}

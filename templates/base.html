@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SLLS85MXML"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-SLLS85MXML');
+    </script>
+
+    <title>{% block title %}Tejidos Margot | Tienda Oficial{% endblock %}</title>
+    <!-- Favicon Actualizado -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header id="main-header">
+        <div class="header-left">
+            <button class="hamburger-btn" id="hamburger-btn" aria-label="Abrir menú">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav class="nav-links" id="mobile-nav">
+                <a href="{{ url_for('productos') }}">CATÁLOGO</a>
+                <a href="{{ url_for('inicio') }}#faq">PREGUNTAS</a>
+                <a href="{{ url_for('inicio') }}#contacto">CONTACTO</a>
+            </nav>
+        </div>
+        <div class="header-center">
+            <a href="{{ url_for('inicio') }}">
+                <img src="{{ url_for('static', filename='logo2.png') }}" alt="Margot" class="logo-center">
+            </a>
+        </div>
+        <div class="header-right">
+            <a href="{{ url_for('carrito') }}" class="cart-icon">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span class="cart-badge">{{ cart_count }}</span>
+            </a>
+        </div>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="footer-container">
+            <div class="footer-links">
+                <a href="https://wa.me/5491125193017?text=Hola%2C%20quiero%20hacer%20un%20pedido%20personalizado%20%28dise%C3%B1o%2C%20medidas%20y%20colores%29." target="_blank" rel="noopener noreferrer">PEDIDO PERSONALIZADO</a>
+                <a href="{{ url_for('inicio') }}#faq">PREGUNTAS FRECUENTES</a>
+                <a href="{{ url_for('inicio') }}#contacto">CONTACTO</a>
+            </div>
+            <div class="footer-social">
+                <a href="https://wa.me/5491125193017" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-whatsapp"></i></a>
+                <a href="https://instagram.com/tejidosmargot" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-instagram"></i></a>
+                <a href="https://facebook.com/tejidosmargot" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook-f"></i></a>
+            </div>
+        </div>
+        <div class="footer-copy">
+            <p>&copy; 2026 TEJIDOS MARGOT. TODOS LOS DERECHOS RESERVADOS.</p>
+        </div>
+    </footer>
+
+    <script>
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            smooth: true,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                if(this.getAttribute('href').startsWith('#')) {
+                    e.preventDefault();
+                    lenis.scrollTo(this.getAttribute('href'));
+                }
+            });
+        });
+
+        let slideIndex = 1;
+        let slideInterval;
+
+        function showSlides(n) {
+            let slides = document.querySelectorAll(".carousel-slide");
+            let dots = document.querySelectorAll(".dot");
+            if (!slides.length) return;
+
+            if (n > slides.length) {slideIndex = 1}
+            if (n < 1) {slideIndex = slides.length}
+
+            slides.forEach(slide => slide.classList.remove("active"));
+            dots.forEach(dot => dot.classList.remove("active"));
+
+            slides[slideIndex-1].classList.add("active");
+            dots[slideIndex-1].classList.add("active");
+        }
+
+        window.currentSlide = function(n) {
+            clearInterval(slideInterval);
+            showSlides(slideIndex = n);
+            startCarousel();
+        }
+
+        function startCarousel() {
+            clearInterval(slideInterval);
+            slideInterval = setInterval(function() {
+                showSlides(slideIndex += 1);
+            }, 5000);
+        }
+
+        window.toggleFaq = function(element) {
+            element.classList.toggle('active');
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // Hamburger menu
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            const mobileNav = document.getElementById('mobile-nav');
+            if (hamburgerBtn && mobileNav) {
+                hamburgerBtn.addEventListener('click', function () {
+                    this.classList.toggle('open');
+                    mobileNav.classList.toggle('mobile-open');
+                });
+                mobileNav.querySelectorAll('a').forEach(function (link) {
+                    link.addEventListener('click', function () {
+                        hamburgerBtn.classList.remove('open');
+                        mobileNav.classList.remove('mobile-open');
+                    });
+                });
+                // Cerrar si se toca fuera del header
+                document.addEventListener('click', function (e) {
+                    if (!e.target.closest('header')) {
+                        hamburgerBtn.classList.remove('open');
+                        mobileNav.classList.remove('mobile-open');
+                    }
+                });
+            }
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            const hiddenElements = document.querySelectorAll('.fade-up');
+            hiddenElements.forEach((el) => observer.observe(el));
+
+            let lastScrollTop = 0;
+            const header = document.getElementById('main-header');
+
+            window.addEventListener('scroll', function() {
+                let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                if (scrollTop > lastScrollTop && scrollTop > 80) {
+                    header.classList.add('header-hidden');
+                } else {
+                    header.classList.remove('header-hidden');
+                }
+                lastScrollTop = scrollTop;
+            });
+
+            if(document.querySelector(".carousel-slide")) {
+                showSlides(slideIndex);
+                startCarousel();
+            }
+        });
+    </script>
+</body>
+</html>

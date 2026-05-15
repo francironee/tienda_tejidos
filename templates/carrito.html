@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="page-header fade-up" style="text-align: center; padding-bottom: 2rem;">
+    <span class="section-subtitle">· DETALLE DE COMPRA ·</span>
+    <h2 class="section-title">Tu <em>carrito</em></h2>
+</section>
+
+<section class="carrito-container fade-up" style="max-width: 800px; margin: 0 auto; padding: 0 20px 80px 20px;">
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div style="padding: 15px; margin-bottom: 30px; border-radius: 4px; border: 1px solid #f5c6cb; background-color: #f8d7da; color: #721c24; text-align: center; font-family: 'Montserrat', sans-serif;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if items_carrito and items_carrito|length > 0 %}
+        <div class="cart-items" style="border-top: 1px solid var(--color-cream);">
+            {% for item in items_carrito %}
+            <div class="cart-item" id="item-{{ loop.index }}" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--color-cream); padding: 30px 0; gap: 20px;">
+                
+                <div style="display: flex; align-items: center; gap: 30px;">
+                    <img src="{{ url_for('static', filename=item.img) }}" alt="{{ item.nombre }}" style="width: 100px; height: 130px; object-fit: cover; border-radius: 2px;">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <h4 style="font-family: 'Playfair Display', serif; margin: 0; font-size: 1.4rem; color: var(--color-brown);">{{ item.nombre_base | upper }}</h4>
+                        {% if item.color %}
+                        <p style="margin: 0; font-family: 'Montserrat', sans-serif; font-size: 0.85rem; color: var(--color-taupe); letter-spacing: 1px;">Color: {{ item.color }}</p>
+                        {% endif %}
+                        
+                        <div class="cart-qty-controls" style="margin-top: 10px;">
+                            <button type="button" class="cart-qty-btn" onclick="updateCart('{{ item.nombre }}', 'decrease', {{ loop.index }})">-</button>
+                            <span id="qty-{{ loop.index }}" style="font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 0.95rem;">{{ item.qty }}</span>
+                            <button type="button" class="cart-qty-btn" onclick="updateCart('{{ item.nombre }}', 'increase', {{ loop.index }})">+</button>
+                        </div>
+                        
+                        <form action="{{ url_for('remove_from_cart', nombre=item.nombre) }}" method="POST" style="margin-top: 10px;">
+                            <button type="submit" style="background: none; border: none; color: var(--color-taupe); cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; font-weight: 600; padding: 0; text-decoration: underline; text-underline-offset: 3px; transition: color 0.3s ease;" onmouseover="this.style.color='var(--color-slate)'" onmouseout="this.style.color='var(--color-taupe)'">ELIMINAR</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div style="text-align: right;">
+                    <p id="subtotal-{{ loop.index }}" style="font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 1.2rem; color: var(--color-slate); margin: 0;">$ {{ "{:,.0f}".format(item.subtotal).replace(',', '.') }}</p>
+                </div>
+                
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Controles inferiores: Vaciar carrito + Envío -->
+        <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap;">
+            <form action="{{ url_for('empty_cart') }}" method="POST" style="display: inline;">
+                <button type="submit" class="empty-cart-btn">VACIAR CARRITO</button>
+            </form>
+            
+            <!-- Sección de Envío compacta -->
+            <div class="shipping-section" style="padding: 15px 20px; background: var(--color-cream); border-radius: 4px; flex: 1; min-width: 250px; max-width: 400px;">
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Opción Retiro en Showroom -->
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 10px; background: #fff; border-radius: 4px; border: 2px solid transparent; transition: border-color 0.3s; font-size: 0.85rem;" onmouseover="this.style.borderColor='var(--color-sage)'" onmouseout="if(!document.getElementById('retiro').checked) this.style.borderColor='transparent'">
+                        <input type="radio" name="tipo_envio" id="retiro" value="retiro" checked onchange="seleccionarEnvio('retiro')" style="margin: 0;">
+                        <div style="flex: 1;">
+                            <div style="font-family: 'Montserrat', sans-serif; font-weight: 600; color: var(--color-brown);">Retiro en showroom</div>
+                            <div style="font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--color-sage);">Villa Pueyrredón - Gratis</div>
+                        </div>
+                    </label>
+                    
+                    <!-- Opción Envío a Domicilio -->
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 10px; background: #fff; border-radius: 4px; border: 2px solid transparent; transition: border-color 0.3s; font-size: 0.85rem;" onmouseover="this.style.borderColor='var(--color-sage)'" onmouseout="if(!document.getElementById('envio').checked) this.style.borderColor='transparent'">
+                        <input type="radio" name="tipo_envio" id="envio" value="envio" onchange="seleccionarEnvio('envio')" style="margin: 0;">
+                        <div style="flex: 1;">
+                            <div style="font-family: 'Montserrat', sans-serif; font-weight: 600; color: var(--color-brown);">Envío a domicilio</div>
+                            <div style="font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--color-sage);">Precio a coordinar</div>
+                        </div>
+                    </label>
+                    
+                    <!-- Mensaje de envío (solo visible si selecciona envío) -->
+                    <div id="mensaje-envio-info" style="display: none; padding: 10px; background: #fff; border-radius: 4px;">
+                        <p style="margin: 0; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--color-brown); line-height: 1.4;">
+                            <i class="fa-solid fa-info-circle" style="color: var(--color-sage); margin-right: 5px;"></i>
+                            Coordinaremos el precio y método de envío por privado tras la compra.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="cart-summary" style="margin-top: 40px; text-align: right;">
+            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 40px; margin-bottom: 30px;">
+                <span style="font-family: 'Montserrat', sans-serif; font-size: 0.9rem; letter-spacing: 2px; color: var(--color-taupe); text-transform: uppercase;">Total</span>
+                <h3 id="cart-total-amount" style="font-family: 'Playfair Display', serif; margin: 0; font-size: 2.2rem; color: var(--color-brown);">$ {{ "{:,.0f}".format(total).replace(',', '.') }}</h3>
+            </div>
+            
+            <form action="{{ url_for('checkout_mp') }}" method="POST" id="checkout-form" style="display:none;"></form>
+            <button type="button" class="btn-hero" onclick="abrirModalDatos()" style="width: 100%; max-width: 350px; font-size: 0.85rem; padding: 20px; float: right; border-radius: 2px;">FINALIZAR COMPRA</button>
+            <div style="clear: both;"></div>
+            <p style="font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--color-sage); margin-top: 15px; letter-spacing: 1px;"><i class="fa-solid fa-lock" style="margin-right: 5px;"></i> Pago seguro y protegido</p>
+        </div>
+        
+    {% else %}
+        <div style="text-align: center; padding: 80px 0; border-top: 1px solid var(--color-cream); border-bottom: 1px solid var(--color-cream);">
+            <i class="fa-solid fa-bag-shopping" style="font-size: 3rem; color: var(--color-cream); margin-bottom: 25px;"></i>
+            <p style="font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--color-brown); margin: 0 0 10px 0;">Tu carrito está vacío</p>
+            <p style="font-family: 'Montserrat', sans-serif; font-size: 0.9rem; color: var(--color-sage); margin-bottom: 40px;">Descubrí nuestro catálogo y encontrá piezas únicas tejidas con amor.</p>
+            <a href="{{ url_for('productos') }}" class="btn-hero" style="font-size: 0.8rem; padding: 15px 40px; border-radius: 2px;">EXPLORAR CATÁLOGO</a>
+        </div>
+    {% endif %}
+</section>
+
+<script>
+    function updateCart(key, action, index) {
+        fetch('/update_cart/' + encodeURIComponent(key) + '/' + action, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.deleted) {
+                    document.getElementById('item-' + index).remove();
+                    if (data.cart_count === 0) {
+                        location.reload();
+                    }
+                } else {
+                    document.getElementById('qty-' + index).innerText = data.new_qty;
+                    let formattedSubtotal = data.item_subtotal.toLocaleString('es-AR');
+                    document.getElementById('subtotal-' + index).innerText = '$ ' + formattedSubtotal.replace(/,/g, '.');
+                }
+                
+                let formattedTotal = data.cart_total.toLocaleString('es-AR');
+                document.getElementById('cart-total-amount').innerText = '$ ' + formattedTotal.replace(/,/g, '.');
+                
+                const badge = document.querySelector('.cart-badge');
+                if (badge) badge.textContent = data.cart_count;
+            }
+        })
+        .catch(err => console.error(err));
+    }
+
+    let tipoEnvioSeleccionado = 'retiro';
+
+    function seleccionarEnvio(tipo) {
+        const mensajeEnvio = document.getElementById('mensaje-envio-info');
+        tipoEnvioSeleccionado = tipo;
+        
+        if (tipo === 'envio') {
+            mensajeEnvio.style.display = 'block';
+            // Guardar en sesión
+            fetch('/guardar_envio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tipo: 'envio', costo: 0, zona: 'A coordinar', cp: '' })
+            });
+        } else {
+            // Retiro en showroom - gratis
+            mensajeEnvio.style.display = 'none';
+            // Guardar en sesión
+            fetch('/guardar_envio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tipo: 'retiro', costo: 0, zona: 'Retiro showroom', cp: '' })
+            });
+        }
+    }
+
+    function abrirModalDatos() {
+        const direccionContainer = document.getElementById('campo-direccion-container');
+        const direccionInput = document.getElementById('campo-direccion');
+        
+        // Mostrar campo de dirección solo si eligió envío
+        if (tipoEnvioSeleccionado === 'envio') {
+            direccionContainer.style.display = 'block';
+            direccionInput.required = true;
+        } else {
+            direccionContainer.style.display = 'none';
+            direccionInput.required = false;
+            direccionInput.value = '';
+        }
+        
+        document.getElementById('modal-datos').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function cerrarModalDatos() {
+        document.getElementById('modal-datos').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    function confirmarYPagar() {
+        const nombre = document.getElementById('campo-nombre').value.trim();
+        const celular = document.getElementById('campo-celular').value.trim();
+        const email = document.getElementById('campo-email').value.trim();
+        const direccion = document.getElementById('campo-direccion').value.trim();
+
+        // Validar campos básicos
+        if (!nombre || !celular || !email) {
+            document.getElementById('modal-error').innerText = 'Por favor completá todos los campos.';
+            document.getElementById('modal-error').style.display = 'block';
+            return;
+        }
+
+        // Validar dirección si eligió envío
+        if (tipoEnvioSeleccionado === 'envio' && !direccion) {
+            document.getElementById('modal-error').innerText = 'Por favor ingresá tu dirección de envío.';
+            document.getElementById('modal-error').style.display = 'block';
+            return;
+        }
+
+        const datosCliente = { nombre, celular, email };
+        if (tipoEnvioSeleccionado === 'envio') {
+            datosCliente.direccion = direccion;
+        }
+
+        fetch('/guardar_datos_cliente', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datosCliente)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                document.getElementById('checkout-form').submit();
+            }
+        });
+    }
+</script>
+
+<!-- Modal de datos del cliente -->
+<div id="modal-datos" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:#fff; border-radius:8px; padding:40px; max-width:480px; width:100%; font-family:'Montserrat',sans-serif; position:relative;">
+        <button onclick="cerrarModalDatos()" style="position:absolute; top:6px; right:8px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--color-taupe); line-height:1;">×</button>
+        <h3 style="font-family:'Playfair Display',serif; color:var(--color-brown); font-size:1.6rem; margin-bottom:8px;">Antes de continuar</h3>
+        <p style="font-size:0.85rem; color:var(--color-taupe); margin-bottom:28px; letter-spacing:0.5px;">Necesitamos tus datos.</p>
+
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <input id="campo-nombre" type="text" placeholder="NOMBRE COMPLETO" style="padding:14px 16px; border:2px solid var(--color-cream); border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.9rem; width:100%; box-sizing:border-box;">
+            <input id="campo-celular" type="tel" placeholder="NÚMERO DE CELULAR" style="padding:14px 16px; border:2px solid var(--color-cream); border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.9rem; width:100%; box-sizing:border-box;">
+            <input id="campo-email" type="email" placeholder="EMAIL" style="padding:14px 16px; border:2px solid var(--color-cream); border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.9rem; width:100%; box-sizing:border-box;">
+            
+            <!-- Campo de dirección (solo visible si elige envío) -->
+            <div id="campo-direccion-container" style="display: none;">
+                <label style="display: block; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--color-taupe); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Dirección de envío</label>
+                <textarea id="campo-direccion" placeholder="Calle, número, localidad, provincia..." style="padding:14px 16px; border:2px solid var(--color-cream); border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.9rem; width:100%; box-sizing:border-box; min-height: 80px; resize: vertical;"></textarea>
+            </div>
+        </div>
+
+        <p id="modal-error" style="display:none; color:#a85454; font-size:0.82rem; margin-top:12px;">Por favor completá todos los campos.</p>
+
+        <button onclick="confirmarYPagar()" style="margin-top:24px; width:100%; padding:18px; background:var(--color-brown); color:#fff; border:none; border-radius:4px; font-family:'Montserrat',sans-serif; font-weight:600; font-size:0.9rem; letter-spacing:1.5px; cursor:pointer; transition:background 0.3s;">CONTINUAR CON EL PAGO</button>
+        <p style="text-align:center; margin-top:12px; font-size:0.75rem; color:var(--color-sage);"><i class="fa-solid fa-lock" style="margin-right:4px;"></i>Pago seguro y protegido</p>
+    </div>
+</div>
+{% endblock %}

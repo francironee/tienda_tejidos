@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    @media (min-width: 769px) {
+        main { padding-top: 0 !important; }
+    }
+</style>
+<section id="hero" class="hero-carousel fade-up">
+    <div class="carousel-slide" style="background-image: url('{{ url_for('static', filename='portada1.jpeg') }}');"></div>
+    <div class="carousel-slide" style="background-image: url('{{ url_for('static', filename='portada2.jpg') }}');"></div>
+    <div class="carousel-slide" style="background-image: url('{{ url_for('static', filename='portada3.jpg') }}');"></div>
+
+    <div class="carousel-overlay"></div>
+
+    <div class="hero-content" style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); text-align: center; animation: scrollBounce 2s infinite;">
+        <span style="display: block; color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; letter-spacing: 3px; text-transform: lowercase; margin-bottom: 3px; opacity: 0; animation: fadeInDelay 1s forwards 5s; font-family: 'Nunito', 'Quicksand', 'Varela Round', sans-serif;">desliza</span>
+        <a href="#destacados" style="color: rgba(255, 255, 255, 0.5); font-size: 1.5rem; text-decoration: none; display: inline-block; transition: color 0.3s ease;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255, 255, 255, 0.5)'">
+            <i class="fa-solid fa-angle-down"></i>
+        </a>
+    </div>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400&display=swap');
+
+        @keyframes scrollBounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+            40% { transform: translateX(-50%) translateY(-15px); }
+            60% { transform: translateX(-50%) translateY(-7px); }
+        }
+        @keyframes fadeInDelay {
+            to { opacity: 1; }
+        }
+    </style>
+
+    <div class="carousel-dots">
+        <span class="dot" onclick="currentSlide(1)"></span>
+        <span class="dot" onclick="currentSlide(2)"></span>
+        <span class="dot" onclick="currentSlide(3)"></span>
+    </div>
+</section>
+
+<section id="destacados">
+    <div class="section-header fade-up">
+        <h2 class="section-title">Prendas <em>destacadas</em></h2>
+        <span class="section-subtitle" style="margin-top: 10px;">· HECHAS CON AMOR ·</span>
+    </div>
+
+    <div class="catalogo">
+        {% for dest in destacados %}
+        <div class="producto fade-up">
+            <a href="{{ url_for('producto_detalle', nombre=dest.nombre) }}" class="producto-img" style="background-image: url('{{ url_for('static', filename=dest.img) }}'); display: block; text-decoration: none;"></a>
+            <div class="producto-info">
+                <h3>{{ dest.categoria_rel.nombre | upper }} {{ dest.nombre | upper }}</h3>
+                <p class="precio">$ {{ "{:,.0f}".format(dest.precio).replace(',', '.') }}</p>
+                <p class="stock">{% if dest.stock > 0 %}EN STOCK{% else %}SIN STOCK{% endif %}</p>
+            </div>
+            <a href="{{ url_for('producto_detalle', nombre=dest.nombre) }}" class="btn-agregar">VER DETALLES</a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div style="text-align: center; margin-top: 50px;" class="fade-up">
+        <a href="{{ url_for('productos') }}" class="btn-hero" style="background-color: var(--color-taupe);">VER TODO EL CATÁLOGO</a>
+    </div>
+</section>
+
+<section id="faq" style="position: relative;">
+    <div style="position: absolute; left: calc(50% - 50vw - 150px); top: -50px; width: 600px; height: 600px; background-image: url('{{ url_for('static', filename='ovillo_bg.png') }}'); background-size: contain; background-repeat: no-repeat; opacity: 0.20; pointer-events: none; mix-blend-mode: multiply; z-index: -1;"></div>
+    <div class="section-header fade-up">
+        <h2 class="section-title">Preguntas <em>frecuentes</em></h2>
+        <span class="section-subtitle" style="margin-top: 10px;">· TODO LO QUE NECESITÁS SABER ·</span>
+    </div>
+
+    <div class="faq-item fade-up" onclick="toggleFaq(this)">
+        <div class="faq-question">
+            <h3>¿QUÉ MÉTODOS DE PAGO ACEPTAN?</h3>
+            <i class="fa-solid fa-chevron-down faq-arrow"></i>
+        </div>
+        <div class="faq-answer-wrapper">
+            <div class="faq-answer">
+                <p>Aceptamos tarjetas de crédito, débito y transferencia bancaria a través de Mercado Pago, de forma segura y rápida.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="faq-item fade-up" onclick="toggleFaq(this)">
+        <div class="faq-question">
+            <h3>¿CÓMO FUNCIONA EL ENVÍO?</h3>
+            <i class="fa-solid fa-chevron-down faq-arrow"></i>
+        </div>
+        <div class="faq-answer-wrapper">
+            <div class="faq-answer">
+                <p>Los envíos se realizan a todo el país. Una vez completada la compra, nos ponemos en contacto con vos para coordinar el envío y acordar todos los detalles.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="faq-item fade-up" onclick="toggleFaq(this)">
+        <div class="faq-question">
+            <h3>¿PUEDO PASAR A RETIRARLO?</h3>
+            <i class="fa-solid fa-chevron-down faq-arrow"></i>
+        </div>
+        <div class="faq-answer-wrapper">
+            <div class="faq-answer">
+                <p>¡Por supuesto! Podés pasar a retirar tu pedido de forma gratuita en nuestro Showroom. La dirección exacta se comunica una vez finalizada la compra.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="faq-item fade-up" onclick="toggleFaq(this)">
+        <div class="faq-question">
+            <h3>¿DÓNDE SE ENCUENTRA EL SHOWROOM?</h3>
+            <i class="fa-solid fa-chevron-down faq-arrow"></i>
+        </div>
+        <div class="faq-answer-wrapper">
+            <div class="faq-answer">
+                <p>Tenemos nuestro showroom ubicado en Villa Pueyrredón, CABA. Comunicate con nosotros para coordinar una visita.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="faq-item fade-up" onclick="toggleFaq(this)">
+        <div class="faq-question">
+            <h3>¿CÓMO CUIDAR LOS TEJIDOS?</h3>
+            <i class="fa-solid fa-chevron-down faq-arrow"></i>
+        </div>
+        <div class="faq-answer-wrapper">
+            <div class="faq-answer">
+                <p>Para que tus prendas duren muchos años en perfecto estado, seguí estos consejos:</p>
+                <ul style="margin-top: 10px; padding-left: 20px; line-height: 2;">
+                    <li>No colgarlas en percha, ya que esto puede deformar la prenda.</li>
+                    <li>Lavar con jabón neutro blanco y agua fría. Elegir días de poca humedad y luego secar sin retorcer, colocando la prenda en forma horizontal sobre una toalla al aire libre sobre una superficie plana.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="faq-item fade-up" onclick="toggleFaq(this)">
+        <div class="faq-question">
+            <h3>¿QUÉ MATERIALES UTILIZAN EN SUS PRENDAS?</h3>
+            <i class="fa-solid fa-chevron-down faq-arrow"></i>
+        </div>
+        <div class="faq-answer-wrapper">
+            <div class="faq-answer">
+                <p>Tejemos todos nuestros diseños a mano y con materiales premium, amables con la piel, para que te sientas cómoda. Al usar materiales de primera calidad la idea es que nuestros tejidos te acompañen muchos años como nuevos.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="faq-item fade-up" onclick="toggleFaq(this)">
+        <div class="faq-question">
+            <h3>¿PUEDO PEDIR MI PROPIO TEJIDO PERSONALIZADO?</h3>
+            <i class="fa-solid fa-chevron-down faq-arrow"></i>
+        </div>
+        <div class="faq-answer-wrapper">
+            <div class="faq-answer">
+                <p>¡Sí, obvio! Esa es una de las ventajas de Tejidos Margot. Te contactás con nosotros, nos mostrás el modelo que te interesó y si el color que querías no se encuentra entre las opciones, o las medidas no son de tu talle, nos pasás tus preferencias y nosotros lo hacemos realidad.<br><br>Contactate por WhatsApp o Instagram, acercanos tu idea y ¡comenzamos!</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="contacto">
+    <div class="section-header fade-up">
+        <h2 class="section-title">Ponete en <em>contacto</em></h2>
+        <span class="section-subtitle" style="margin-top: 10px;">· ESTAMOS PARA AYUDARTE ·</span>
+    </div>
+
+    <div class="contacto-container fade-up">
+        <div class="contacto-historia">
+            <h3>Nuestra Historia</h3>
+            <p>Todo comenzó con dos agujas y un ovillo de lana. En Tejidos Margot, cada prenda está hecha a mano con dedicación y amor, buscando abrazar el alma en cada punto. Creemos en la moda lenta, sostenible y en el valor de lo artesanal que pasa de generación en generación.</p>
+
+            <div class="historia-stats">
+                <div class="stat-item">
+                    <span class="stat-numero">+15</span>
+                    <span class="stat-etiqueta">AÑOS JUNTOS</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-numero">100%</span>
+                    <span class="stat-etiqueta">HECHO A MANO</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="contacto-form-wrapper">
+            <form action="https://formsubmit.co/somostejidosmargot@gmail.com" method="POST" class="formulario">
+                <input type="text" name="name" placeholder="NOMBRE COMPLETO" required>
+                <input type="email" name="email" placeholder="EMAIL" required>
+                <textarea name="message" placeholder="DEJANOS TU MENSAJE..." rows="4" required></textarea>
+                <input type="hidden" name="_next" value="{{ request.url_root }}">
+                <input type="hidden" name="_subject" value="Nuevo mensaje desde la web de Margot">
+                <input type="hidden" name="_captcha" value="false">
+                <button type="submit">ENVIAR</button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

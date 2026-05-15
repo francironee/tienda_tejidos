@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="page-header fade-up">
+    <h2 class="section-title">Acceso <em>Administrador</em></h2>
+</section>
+
+<section class="admin-login-container fade-up" style="max-width: 500px; margin: 0 auto; padding: 50px 20px;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div style="padding: 15px; margin-bottom: 20px; border-radius: 5px; background-color: #f8d7da; color: #721c24; text-align: center;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('admin_login') }}" method="POST" style="display: flex; flex-direction: column; gap: 20px; background: var(--color-cream); padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <i class="fa-solid fa-lock" style="font-size: 3rem; color: var(--color-taupe);"></i>
+        </div>
+        
+        <div>
+            <label for="password" style="font-family: 'Montserrat', sans-serif; font-weight: 500; color: var(--color-slate); display: block; margin-bottom: 8px;">Contraseña:</label>
+            <input type="password" id="password" name="password" required style="width: 100%; padding: 12px; border: 1px solid var(--color-sage); border-radius: 4px; font-family: 'Montserrat', sans-serif;">
+        </div>
+        
+        <button type="submit" class="btn-hero" style="width: 100%; border: none; cursor: pointer;">ENTRAR AL PANEL</button>
+    </form>
+</section>
+{% endblock %}

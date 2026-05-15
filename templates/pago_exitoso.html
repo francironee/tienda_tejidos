@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="page-header fade-up" style="text-align: center; padding: 100px 20px;">
+    <i class="fa-solid fa-envelope-open-text" style="font-size: 5rem; color: var(--color-brown); margin-bottom: 30px;"></i>
+    <h2 class="section-title">¡Gracias por tu <em>compra</em>!</h2>
+    <p style="font-family: 'Montserrat', sans-serif; font-size: 1.1rem; color: var(--color-slate); margin-top: 30px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.8;">
+        Tu pago ha sido procesado correctamente. <br><br>
+        <strong>Acabamos de enviarte un correo electrónico</strong> con todos los detalles de tu pedido. En breve, nos pondremos en contacto contigo por WhatsApp para coordinar el envío o el retiro por nuestro showroom (con la dirección exacta).<br><br>
+    </p>
+    <p style="font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--color-taupe); font-style: italic; margin-top: 30px;">
+        Gracias por abrigarte con un diseño Margot.
+    </p>
+    <a href="{{ url_for('inicio') }}" class="btn-hero" style="margin-top: 40px;">VOLVER AL INICIO</a>
+</section>
+{% endblock %}

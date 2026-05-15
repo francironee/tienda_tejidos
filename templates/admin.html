@@ -1,0 +1,777 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* Estilos específicos para un admin minimalista y fácil de usar */
+    .admin-header {
+        text-align: center;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--color-cream);
+        margin-bottom: 40px;
+    }
+    .admin-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 2.5rem;
+        color: var(--color-brown);
+        margin-bottom: 10px;
+    }
+    .admin-btn-logout {
+        color: var(--color-slate);
+        text-decoration: underline;
+        font-size: 1.1rem;
+    }
+    
+    .admin-section {
+        background-color: var(--color-offwhite);
+        border: 1px solid var(--color-cream);
+        border-radius: 8px;
+        padding: 40px;
+        margin-bottom: 50px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    }
+    .admin-layout {
+        display: flex;
+        flex-direction: column;
+    }
+    .admin-section.admin-add-form {
+        max-width: 760px;
+        margin: 0 auto 45px auto;
+        padding: 28px;
+    }
+    .admin-section.admin-category-form {
+        max-width: 330px;
+        margin: 0 auto 14px auto;
+        padding: 10px 12px;
+    }
+    .admin-category-form .admin-section-title {
+        font-size: 1.05rem;
+        margin-bottom: 10px;
+    }
+    .admin-category-form .form-group {
+        margin-bottom: 8px;
+    }
+    .admin-category-form .form-label {
+        font-size: 0.78rem;
+        margin-bottom: 4px;
+    }
+    .admin-category-form .form-input {
+        padding: 8px 10px;
+        font-size: 0.82rem;
+        border-width: 1px;
+    }
+    .admin-category-form .admin-btn-primary {
+        font-size: 0.72rem;
+        padding: 9px 12px;
+        letter-spacing: 0.7px;
+    }
+    .admin-collapsible {
+        order: 3;
+        margin: 0 auto 16px auto;
+        max-width: 760px;
+        width: 100%;
+    }
+    .admin-collapsible > summary {
+        cursor: pointer;
+        list-style: none;
+        background: white;
+        border: 1px solid var(--color-cream);
+        border-radius: 8px;
+        padding: 13px 16px;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--color-brown);
+        letter-spacing: 0.5px;
+    }
+    .admin-collapsible > summary::-webkit-details-marker {
+        display: none;
+    }
+    .admin-collapsible > summary::after {
+        content: '+';
+        float: right;
+        font-size: 1rem;
+        color: var(--color-slate);
+    }
+    .admin-collapsible[open] > summary::after {
+        content: '−';
+    }
+    .inventory-section {
+        order: 2;
+    }
+    .admin-section-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.8rem;
+        color: var(--color-brown);
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    /* Formularios amigables */
+    .form-group {
+        margin-bottom: 25px;
+    }
+    .form-label {
+        display: block;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: var(--color-slate);
+        margin-bottom: 8px;
+    }
+    .form-help {
+        display: block;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.9rem;
+        color: var(--color-taupe);
+        margin-bottom: 8px;
+    }
+    .form-input {
+        width: 100%;
+        padding: 15px;
+        font-size: 1.1rem;
+        border: 2px solid var(--color-cream);
+        border-radius: 6px;
+        font-family: 'Montserrat', sans-serif;
+        background-color: white;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: var(--color-sage);
+    }
+    
+    .admin-btn-primary {
+        background-color: var(--color-brown);
+        color: white;
+        font-size: 1.2rem;
+        font-weight: 600;
+        padding: 15px 30px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        width: 100%;
+        font-family: 'Montserrat', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .admin-btn-primary:hover {
+        background-color: var(--color-slate);
+    }
+    
+    /* Tarjetas de Inventario */
+    .admin-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+        gap: 16px;
+    }
+    .admin-card {
+        background: white;
+        border: 2px solid var(--color-cream);
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    .admin-card-img {
+        width: 100%;
+        height: 185px;
+        object-fit: cover;
+    }
+    .admin-card-body {
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+    .admin-card-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.15rem;
+        color: var(--color-brown);
+        margin-bottom: 8px;
+    }
+    .admin-card-info {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.86rem;
+        color: var(--color-slate);
+        margin-bottom: 4px;
+    }
+    .admin-card-actions {
+        margin-top: auto;
+        padding-top: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .btn-edit {
+        background-color: var(--color-taupe);
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 4px;
+        font-size: 0.84rem;
+        cursor: pointer;
+        font-weight: 600;
+        text-align: center;
+        text-decoration: none;
+    }
+    .btn-delete {
+        background-color: #d9534f;
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 4px;
+        font-size: 0.84rem;
+        cursor: pointer;
+        font-weight: 600;
+        text-align: center;
+    }
+    .btn-toggle {
+        background-color: #5bc0de;
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 4px;
+        font-size: 0.84rem;
+        cursor: pointer;
+        font-weight: 600;
+        text-align: center;
+    }
+    .btn-toggle:hover {
+        background-color: #46b8da;
+    }
+    .product-hidden-badge {
+        display: inline-block;
+        background-color: #f0ad4e;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    .inventory-tools {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .inventory-search {
+        width: 100%;
+        max-width: 360px;
+        padding: 10px 12px;
+        border: 1px solid var(--color-cream);
+        border-radius: 6px;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.88rem;
+        background: white;
+    }
+    .inventory-letter-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .letter-filter-btn {
+        width: auto;
+        margin: 0;
+        padding: 8px 10px;
+        background: white;
+        color: var(--color-slate);
+        border: 1px solid var(--color-cream);
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    .letter-filter-btn.active,
+    .letter-filter-btn:hover {
+        background: var(--color-brown);
+        color: white;
+        border-color: var(--color-brown);
+    }
+    
+    .edit-form-container {
+        display: none;
+        background-color: var(--color-cream);
+        padding: 18px;
+        margin-top: 15px;
+        border-radius: 8px;
+    }
+    .edit-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .edit-form-grid .form-group {
+        margin-bottom: 10px;
+    }
+    .edit-form-container .form-label {
+        font-size: 0.92rem;
+        margin-bottom: 4px;
+    }
+    .edit-form-container .form-help {
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+    }
+    .edit-form-container .form-input {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+    .edit-form-full {
+        grid-column: 1 / -1;
+    }
+</style>
+
+<div class="admin-layout" style="max-width: 1000px; margin: 0 auto; padding: 40px 20px;">
+    
+    <div class="admin-header">
+        <h2 class="admin-title">Panel de Administración</h2>
+        <a href="{{ url_for('admin_logout') }}" class="admin-btn-logout">Cerrar Sesión</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div style="padding: 20px; margin-bottom: 30px; border-radius: 6px; background-color: #d4edda; border: 2px solid #c3e6cb; color: #155724; text-align: center; font-size: 1.2rem; font-weight: bold;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- SECCIÓN: INVENTARIO ACTUAL -->
+    <div class="admin-section inventory-section" style="background-color: transparent; border: none; padding: 0; box-shadow: none;">
+        <h3 class="admin-section-title" style="margin-bottom: 20px; text-align: left;">Inventario Actual (Tus prendas)</h3>
+        <div class="inventory-tools">
+            <input type="text" id="inventory-search" class="inventory-search" placeholder="Buscar prenda por nombre...">
+            <span class="form-help" style="margin: 0;">Filtrar por inicial:</span>
+            <div class="inventory-letter-filters">
+                <button type="button" class="letter-filter-btn active" data-letter="TODAS">TODAS</button>
+                {% for letra in letras_iniciales %}
+                <button type="button" class="letter-filter-btn" data-letter="{{ letra }}">{{ letra }}</button>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="admin-cards-grid">
+            {% for p in productos %}
+            <div class="admin-card" id="product-{{ p.id }}" data-product-name="{{ p.nombre | upper }}">
+                <img src="{{ url_for('static', filename=p.img) }}" class="admin-card-img" alt="{{ p.nombre }}">
+                <div class="admin-card-body">
+                    <h4 class="admin-card-title">{{ p.nombre }}</h4>
+                    {% if p.oculto %}<span class="product-hidden-badge">⚠ OCULTO</span>{% endif %}
+                    <p class="admin-card-info"><strong>Categoría:</strong> {{ p.categoria_rel.nombre }}</p>
+                    <p class="admin-card-info"><strong>Precio:</strong> $ {{ "{:,.0f}".format(p.precio).replace(',', '.') }}</p>
+                    <p class="admin-card-info"><strong>Disponibles:</strong> {{ p.stock }} unidades</p>
+                    
+                    <div class="admin-card-actions">
+                        <button type="button" class="btn-edit" onclick="toggleEditForm({{ p.id }})">EDITAR</button>
+                        
+                        <form action="{{ url_for('admin_toggle_visibility', id=p.id) }}" method="POST" style="margin: 0;">
+                            <button type="submit" class="btn-toggle" style="width: 100%;">
+                                {% if p.oculto %}MOSTRAR PRODUCTO{% else %}OCULTAR PRODUCTO{% endif %}
+                            </button>
+                        </form>
+                        
+                        <form action="{{ url_for('admin_delete_producto', id=p.id) }}" method="POST" style="margin: 0;">
+                            <button type="submit" class="btn-delete" onclick="return confirm('¿Estás segura de que quieres borrar la prenda: {{ p.nombre }}? Esta acción no se puede deshacer.');" style="width: 100%;">BORRAR PRODUCTO</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Formulario de Edición (Oculto por defecto) que se expande bajo la tarjeta -->
+            <div id="edit-form-{{ p.id }}" class="edit-form-container" style="grid-column: 1 / -1;">
+                <h4 style="font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--color-brown); margin-bottom: 12px;">Editando: {{ p.nombre }}</h4>
+                <form action="{{ url_for('admin_edit_producto', id=p.id) }}" method="POST" enctype="multipart/form-data">
+                    <div class="edit-form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Nombre de la prenda:</label>
+                            <input type="text" name="nombre" value="{{ p.nombre }}" class="form-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Precio ($):</label>
+                            <input type="number" name="precio" value="{{ p.precio }}" class="form-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Unidades disponibles:</label>
+                            <input type="number" name="stock" value="{{ p.stock }}" class="form-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Descripción breve:</label>
+                            <textarea name="desc" class="form-input" rows="2" required>{{ p.desc }}</textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Medidas de la prenda:</label>
+                            <textarea name="materiales" class="form-input" rows="2">{{ p.materiales or '' }}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Colores disponibles:</label>
+                            <input type="text" name="colores" value="{{ p.colores or '' }}" class="form-input">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Cambiar foto principal:</label>
+                            <input type="file" name="img" accept="image/*" class="form-input">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Subir fotos extra:</label>
+                            <input type="file" name="extra_imgs" accept="image/*" multiple class="form-input">
+                        </div>
+
+                        <div class="form-group edit-form-full" style="display: flex; align-items: center; gap: 15px; background: white; padding: 10px 12px; border-radius: 6px;">
+                            <input type="checkbox" name="destacado" id="destacado_edit_{{ p.id }}" {% if p.destacado %}checked{% endif %} style="width: 25px; height: 25px;">
+                            <label for="destacado_edit_{{ p.id }}" style="font-size: 0.9rem; font-weight: bold; color: var(--color-brown);">Mostrar en portada principal</label>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 14px;">
+                        <button type="button" class="btn-edit" style="background-color: #888; flex: 1;" onclick="toggleEditForm({{ p.id }})">CANCELAR EDICIÓN</button>
+                        <button type="submit" class="admin-btn-primary" style="flex: 2;">GUARDAR CAMBIOS</button>
+                    </div>
+                </form>
+                
+                {% if p.imagenes_extra %}
+                <div style="margin-top: 20px; background: white; padding: 14px; border-radius: 6px; border: 1px solid #ddd;">
+                    <h5 style="font-family: 'Montserrat', sans-serif; font-size: 0.95rem; color: var(--color-slate); margin-bottom: 5px;">Fotos adicionales guardadas:</h5>
+                    <p style="font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--color-taupe); margin-bottom: 10px;">Arrastrá las fotos para cambiar el orden en que aparecen.</p>
+                    <div class="sortable-images" data-product-id="{{ p.id }}" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        {% for img_extra in p.imagenes_extra %}
+                            <div class="sortable-img-item" data-img-id="{{ img_extra.id }}" style="position: relative; border: 1px solid var(--color-cream); padding: 4px; border-radius: 6px; cursor: grab; user-select: none;">
+                                <img src="{{ url_for('static', filename=img_extra.filename) }}" style="width: 85px; height: 85px; object-fit: cover; border-radius: 4px; pointer-events: none;">
+                                <div style="text-align:center; font-size: 0.65rem; color: var(--color-taupe); margin-top: 3px; font-family: 'Montserrat', sans-serif;">☰ arrastrar</div>
+                                <button type="button" class="btn-delete-image" data-image-id="{{ img_extra.id }}" onclick="return confirm('¿Borrar esta foto definitivamente?')" style="background: #d9534f; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 12px; font-weight: bold; cursor: pointer; position: absolute; top: -12px; right: -12px;">X</button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <details class="admin-collapsible">
+        <summary>Añadir nueva prenda</summary>
+        <div class="admin-section admin-add-form">
+        <h3 class="admin-section-title">Añadir nueva prenda</h3>
+        <form action="{{ url_for('admin_add_producto') }}" method="POST" enctype="multipart/form-data">
+            
+            <div class="form-group">
+                <label class="form-label">Nombre de la prenda:</label>
+                <span class="form-help">Ejemplo: Sweater Coral, Ruana de Lana.</span>
+                <input type="text" name="nombre" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">¿A qué categoría pertenece?</label>
+                <select name="categoria_id" class="form-input" required>
+                    {% for cat in todas_las_categorias %}
+                        <option value="{{ cat.id }}">{{ cat.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Precio ($):</label>
+                <span class="form-help">Solo escribe los números, sin puntos ni comas.</span>
+                <input type="number" name="precio" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">¿Cuántas unidades hay disponibles?</label>
+                <input type="number" name="stock" class="form-input" required value="1">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Descripción breve:</label>
+                <span class="form-help">Frase corta que aparece en el catálogo. Ej: "Corte holgado ideal para media estación."</span>
+                <textarea name="desc" class="form-input" rows="3" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Medidas de la prenda:</label>
+                <span class="form-help">Detallá medidas y referencia de talle. Ej: "Ancho 52 cm, largo 60 cm, manga 58 cm."</span>
+                <textarea name="materiales" class="form-input" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Colores disponibles (Opcional):</label>
+                <span class="form-help">Escribe los colores separados por coma. Ejemplo: Rojo, Azul, Verde. (Déjalo vacío si es color único).</span>
+                <input type="text" name="colores" class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Foto principal de la prenda:</label>
+                <span class="form-help">Esta será la foto que todos verán en el catálogo.</span>
+                <input type="file" name="img" accept="image/*" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Fotos extra de la prenda (Opcional):</label>
+                <span class="form-help">Podés subir varias imágenes a la vez para los detalles del producto.</span>
+                <input type="file" name="extra_imgs" accept="image/*" multiple class="form-input">
+            </div>
+
+            <button type="submit" class="admin-btn-primary" style="margin-top: 20px;">GUARDAR NUEVA PRENDA</button>
+        </form>
+        </div>
+    </details>
+
+    <details class="admin-collapsible">
+        <summary>Crear nueva categoría</summary>
+        <div class="admin-section admin-category-form">
+        <h3 class="admin-section-title">Crear nueva categoría</h3>
+        <form action="{{ url_for('admin_add_categoria') }}" method="POST">
+            <div class="form-group">
+                <label class="form-label">Nombre de la categoría:</label>
+                <input type="text" name="nombre_categoria" class="form-input" required>
+            </div>
+            <button type="submit" class="admin-btn-primary">GUARDAR CATEGORÍA</button>
+        </form>
+        </div>
+    </details>
+
+    <!-- Las tarjetas y formularios de edición se mantienen arriba -->
+
+</div>
+
+<script>
+function toggleEditForm(id) {
+    const formContainer = document.getElementById('edit-form-' + id);
+    if (formContainer.style.display === 'block') {
+        formContainer.style.display = 'none';
+    } else {
+        // Ocultar todos los otros formularios primero
+        document.querySelectorAll('.edit-form-container').forEach(el => el.style.display = 'none');
+        // Mostrar este
+        formContainer.style.display = 'block';
+        // Hacer scroll suave hacia el formulario
+        formContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+// Drag-and-drop para reordenar imágenes secundarias
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.sortable-images').forEach(function(container) {
+        let draggingEl = null;
+
+        container.addEventListener('dragstart', function(e) {
+            draggingEl = e.target.closest('.sortable-img-item');
+            if (!draggingEl) return;
+            draggingEl.style.opacity = '0.5';
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        container.addEventListener('dragend', function(e) {
+            if (!draggingEl) return;
+            draggingEl.style.opacity = '1';
+            draggingEl = null;
+            // Guardar nuevo orden
+            const productId = container.dataset.productId;
+            const ids = Array.from(container.querySelectorAll('.sortable-img-item')).map(el => el.dataset.imgId);
+            fetch('/admin/reorder_images/' + productId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order: ids })
+            });
+        });
+
+        container.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const afterEl = getDragAfterElement(container, e.clientX);
+            if (afterEl == null) {
+                container.appendChild(draggingEl);
+            } else {
+                container.insertBefore(draggingEl, afterEl);
+            }
+        });
+
+        // Hacer los items draggables
+        container.querySelectorAll('.sortable-img-item').forEach(item => {
+            item.setAttribute('draggable', 'true');
+        });
+    });
+
+    function getDragAfterElement(container, x) {
+        const draggableElements = [...container.querySelectorAll('.sortable-img-item:not([style*="opacity: 0.5"])')];
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = x - box.left - box.width / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    const letterButtons = document.querySelectorAll('.letter-filter-btn');
+    const inventoryCards = document.querySelectorAll('.admin-card');
+    const searchInput = document.getElementById('inventory-search');
+    let selectedLetter = 'TODAS';
+
+    function applyInventoryFilters() {
+        const searchTerm = (searchInput?.value || '').trim().toUpperCase();
+        inventoryCards.forEach((card) => {
+            const name = (card.dataset.productName || '').trim();
+            const firstLetter = name.charAt(0);
+            const matchLetter = selectedLetter === 'TODAS' || firstLetter === selectedLetter;
+            const matchSearch = !searchTerm || name.includes(searchTerm);
+            card.style.display = (matchLetter && matchSearch) ? 'flex' : 'none';
+        });
+        document.querySelectorAll('.edit-form-container').forEach((form) => {
+            form.style.display = 'none';
+        });
+    }
+
+    letterButtons.forEach((btn) => {
+        btn.addEventListener('click', function() {
+            letterButtons.forEach((b) => b.classList.remove('active'));
+            this.classList.add('active');
+            selectedLetter = this.dataset.letter;
+            applyInventoryFilters();
+        });
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', applyInventoryFilters);
+    }
+
+    // AJAX para ocultar/mostrar productos
+    document.querySelectorAll('.btn-toggle').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = this.closest('form');
+            const productCard = form.closest('.admin-card');
+            const productId = productCard.id.replace('product-', '');
+            
+            fetch(`/admin/toggle_visibility/${productId}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Actualizar el badge de oculto
+                    const badge = productCard.querySelector('.product-hidden-badge');
+                    if (data.oculto) {
+                        if (!badge) {
+                            const newBadge = document.createElement('span');
+                            newBadge.className = 'product-hidden-badge';
+                            newBadge.textContent = '⚠ OCULTO';
+                            productCard.querySelector('.admin-card-title').insertAdjacentElement('afterend', newBadge);
+                        }
+                    } else {
+                        if (badge) badge.remove();
+                    }
+                    
+                    // Actualizar el texto del botón
+                    this.textContent = data.oculto ? 'MOSTRAR PRODUCTO' : 'OCULTAR PRODUCTO';
+                    
+                    // Mostrar notificación
+                    showNotification(data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+
+    // AJAX para borrar productos
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const productName = this.closest('.admin-card-actions').closest('.admin-card-body').querySelector('.admin-card-title').textContent;
+            const confirmed = confirm(`¿Estás segura de que quieres borrar la prenda: ${productName}? Esta acción no se puede deshacer.`);
+            
+            if (!confirmed) return;
+            
+            const form = this.closest('form');
+            const productCard = form.closest('.admin-card');
+            const productId = productCard.id.replace('product-', '');
+            
+            fetch(`/admin/delete/${productId}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Animar la desaparición de la tarjeta
+                    productCard.style.transition = 'opacity 0.3s ease-out';
+                    productCard.style.opacity = '0';
+                    setTimeout(() => {
+                        productCard.remove();
+                        showNotification(data.message);
+                    }, 300);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+
+    // Función para mostrar notificaciones
+    function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #d4edda;
+            border: 2px solid #c3e6cb;
+            color: #155724;
+            padding: 15px 20px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    // Agregar animaciones CSS
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+});
+</script>
+{% endblock %}

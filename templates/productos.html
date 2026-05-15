@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="page-header fade-up">
+    <h2 class="section-title">Nuestro <em>catálogo</em></h2>
+</section>
+
+<section class="shop-controls fade-up">
+    <div class="categorias-tabs">
+        <button class="cat-btn active" data-cat="Todos">Ver todo</button>
+        {% for categoria in catalogo.keys() %}
+        <button class="cat-btn" data-cat="{{ categoria }}">{{ categoria }}</button>
+        {% endfor %}
+    </div>
+    
+    <div class="filtros-orden">
+        <button type="button" id="toggle-view-btn" class="toggle-view-btn">VISTA COMPACTA</button>
+        <div class="filtro-grupo">
+            <label>Ordenar por:</label>
+            <select id="sort-filter">
+                <option value="nuevos">Nuevos lanzamientos</option>
+                <option value="menor-mayor">Menor a mayor precio</option>
+                <option value="mayor-menor">Mayor a menor precio</option>
+                <option value="az">Alfabético (A-Z)</option>
+            </select>
+        </div>
+    </div>
+</section>
+
+<section class="categoria-section">
+    <div class="catalogo" id="productos-grid">
+        {% set contador = namespace(value=0) %}
+        {% for categoria, items in catalogo.items() %}
+            {% for item in items %}
+            {% set contador.value = contador.value + 1 %}
+            
+            <div class="producto" 
+                 data-categoria="{{ categoria }}" 
+                 data-precio="{{ item.precio }}" 
+                 data-nombre="{{ item.nombre | lower }}" 
+                 data-id="{{ contador.value }}">
+                 
+                <a href="{{ url_for('producto_detalle', nombre=item.nombre) }}" class="producto-img" style="background-image: url('{{ url_for('static', filename=item.img) }}'); display: block; text-decoration: none;"></a>
+                <div class="producto-info">
+                    <h3>{{ item.nombre | upper }}</h3>
+                    <p class="precio">$ {{ "{:,.0f}".format(item.precio).replace(',', '.') }}</p>
+                    <p class="stock">{% if item.stock > 0 %}EN STOCK{% else %}SIN STOCK{% endif %}</p>
+                </div>
+                <a href="{{ url_for('producto_detalle', nombre=item.nombre) }}" class="btn-agregar">VER DETALLES</a>
+            </div>
+            
+            {% endfor %}
+        {% endfor %}
+    </div>
+
+    <div id="no-products-msg" style="display: none; text-align: center; padding: 50px 0; font-family: 'Montserrat', sans-serif; color: var(--color-slate); font-size: 1.2rem;">
+        No se encontraron tejidos en esta categoría.
+    </div>
+</section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const grid = document.getElementById("productos-grid");
+        const productos = Array.from(grid.getElementsByClassName("producto"));
+        const catBtns = document.querySelectorAll(".cat-btn");
+        const sortFilter = document.getElementById("sort-filter");
+        const noProductsMsg = document.getElementById("no-products-msg");
+        const toggleViewBtn = document.getElementById("toggle-view-btn");
+
+        let currentCat = "Todos";
+        let compactView = false;
+
+        function updateGrid() {
+            let visibleCount = 0;
+
+            let filteredProducts = productos.filter(p => {
+                const cat = p.getAttribute("data-categoria");
+                const matchCat = (currentCat === "Todos" || cat === currentCat);
+                
+                if (matchCat) {
+                    p.style.display = "flex";
+                    visibleCount++;
+                    return true;
+                } else {
+                    p.style.display = "none";
+                    return false;
+                }
+            });
+
+            noProductsMsg.style.display = visibleCount === 0 ? "block" : "none";
+
+            const sortType = sortFilter.value;
+            filteredProducts.sort((a, b) => {
+                if (sortType === "nuevos") {
+                    return parseInt(a.getAttribute("data-id")) - parseInt(b.getAttribute("data-id"));
+                } else if (sortType === "menor-mayor") {
+                    return parseFloat(a.getAttribute("data-precio")) - parseFloat(b.getAttribute("data-precio"));
+                } else if (sortType === "mayor-menor") {
+                    return parseFloat(b.getAttribute("data-precio")) - parseFloat(a.getAttribute("data-precio"));
+                } else if (sortType === "az") {
+                    return a.getAttribute("data-nombre").localeCompare(b.getAttribute("data-nombre"));
+                }
+            });
+
+            filteredProducts.forEach(p => grid.appendChild(p));
+        }
+
+        catBtns.forEach(btn => {
+            btn.addEventListener("click", function() {
+                catBtns.forEach(b => b.classList.remove("active"));
+                this.classList.add("active");
+                currentCat = this.getAttribute("data-cat");
+                updateGrid();
+            });
+        });
+
+        sortFilter.addEventListener("change", updateGrid);
+
+        if (toggleViewBtn) {
+            toggleViewBtn.addEventListener("click", function() {
+                compactView = !compactView;
+                grid.classList.toggle("catalogo-compacto", compactView);
+                this.textContent = compactView ? "VISTA NORMAL" : "VISTA COMPACTA";
+            });
+        }
+    });
+</script>
+{% endblock %}
