@@ -36,4 +36,3 @@ El sitio permite navegar productos, gestionar un carrito de compras y administra
    ```
 
 ---
-*Desarrollado con ❤️ y asistencia de IA.*
