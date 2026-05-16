@@ -13,7 +13,7 @@ El sitio permite navegar productos, gestionar un carrito de compras y administra
 - **Backend**: Python (Flask)
 - **Frontend**: HTML5, CSS3 (Vanilla), JavaScript
 - **Base de Datos**: SQLite (vía SQLAlchemy)
-- **Desarrollo**: Creado con asistencia de IA.
+- **Desarrollo**: Vibe Coding :)
 
 ## 📦 Instalación y Uso Local
 
@@ -36,4 +36,3 @@ El sitio permite navegar productos, gestionar un carrito de compras y administra
    ```
 
 ---
-*Desarrollado con ❤️ y asistencia de IA.*

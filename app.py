@@ -8,6 +8,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.utils import formataddr
+import uuid
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'mi_secreto_super_seguro')
@@ -539,8 +540,10 @@ def admin_add_producto():
     img_filename = 'placeholder1.png'
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        img_filename = filename
+        name, ext = os.path.splitext(filename)
+        unique_filename = f"{name}_{uuid.uuid4().hex[:8]}{ext}"
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
+        img_filename = unique_filename
 
     nuevo_producto = Producto(
         nombre=nombre,
@@ -561,8 +564,10 @@ def admin_add_producto():
     for idx, f in enumerate(extra_files):
         if f and allowed_file(f.filename):
             fname = secure_filename(f.filename)
-            f.save(os.path.join(app.config['UPLOAD_FOLDER'], fname))
-            img_secundaria = ImagenSecundaria(filename=fname, producto_id=nuevo_producto.id, orden=idx)
+            name, ext = os.path.splitext(fname)
+            unique_fname = f"{name}_{uuid.uuid4().hex[:8]}{ext}"
+            f.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_fname))
+            img_secundaria = ImagenSecundaria(filename=unique_fname, producto_id=nuevo_producto.id, orden=idx)
             db.session.add(img_secundaria)
     db.session.commit()
 
@@ -584,15 +589,19 @@ def admin_edit_producto(id):
     file = request.files.get('img')
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        producto.img = filename
+        name, ext = os.path.splitext(filename)
+        unique_filename = f"{name}_{uuid.uuid4().hex[:8]}{ext}"
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
+        producto.img = unique_filename
         
     extra_files = request.files.getlist('extra_imgs')
     for f in extra_files:
         if f and allowed_file(f.filename):
             filename = secure_filename(f.filename)
-            f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            img_secundaria = ImagenSecundaria(filename=filename, producto_id=producto.id)
+            name, ext = os.path.splitext(filename)
+            unique_filename = f"{name}_{uuid.uuid4().hex[:8]}{ext}"
+            f.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
+            img_secundaria = ImagenSecundaria(filename=unique_filename, producto_id=producto.id)
             db.session.add(img_secundaria)
         
     db.session.commit()

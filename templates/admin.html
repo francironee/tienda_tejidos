@@ -443,7 +443,7 @@
                             <div class="sortable-img-item" data-img-id="{{ img_extra.id }}" style="position: relative; border: 1px solid var(--color-cream); padding: 4px; border-radius: 6px; cursor: grab; user-select: none;">
                                 <img src="{{ url_for('static', filename=img_extra.filename) }}" style="width: 85px; height: 85px; object-fit: cover; border-radius: 4px; pointer-events: none;">
                                 <div style="text-align:center; font-size: 0.65rem; color: var(--color-taupe); margin-top: 3px; font-family: 'Montserrat', sans-serif;">☰ arrastrar</div>
-                                <button type="button" class="btn-delete-image" data-image-id="{{ img_extra.id }}" onclick="return confirm('¿Borrar esta foto definitivamente?')" style="background: #d9534f; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 12px; font-weight: bold; cursor: pointer; position: absolute; top: -12px; right: -12px;">X</button>
+                                <button type="button" class="btn-delete-image" data-image-id="{{ img_extra.id }}" style="background: #d9534f; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 12px; font-weight: bold; cursor: pointer; position: absolute; top: -12px; right: -12px;">X</button>
                             </div>
                         {% endfor %}
                     </div>
@@ -713,6 +713,39 @@ document.addEventListener('DOMContentLoaded', function() {
                     productCard.style.opacity = '0';
                     setTimeout(() => {
                         productCard.remove();
+                        showNotification(data.message);
+                    }, 300);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+
+    // AJAX para borrar imágenes secundarias
+    document.querySelectorAll('.btn-delete-image').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const confirmed = confirm('¿Borrar esta foto definitivamente?');
+            if (!confirmed) return;
+            
+            const imageId = this.dataset.imageId;
+            const imageContainer = this.closest('.sortable-img-item');
+            
+            fetch(`/admin/delete_image/${imageId}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    imageContainer.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+                    imageContainer.style.opacity = '0';
+                    imageContainer.style.transform = 'scale(0.8)';
+                    setTimeout(() => {
+                        imageContainer.remove();
                         showNotification(data.message);
                     }, 300);
                 }
