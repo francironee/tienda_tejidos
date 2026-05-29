@@ -163,7 +163,7 @@ def inject_cart_count():
 
 @app.route('/')
 def inicio():
-    destacados = Producto.query.filter_by(destacado=True, oculto=False).limit(3).all()
+    destacados = Producto.query.filter_by(destacado=True, oculto=False).limit(4).all()
     return render_template('index.html', destacados=destacados)
 
 @app.route('/productos')

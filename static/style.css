@@ -396,7 +396,7 @@ section {
 
 .catalogo {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 40px;
 }
 
@@ -406,7 +406,8 @@ section {
 }
 
 .catalogo.catalogo-compacto .producto-img {
-    height: 250px;
+    aspect-ratio: 3 / 4;
+    height: auto;
     margin-bottom: 10px;
 }
 
@@ -436,8 +437,9 @@ section {
 
 .producto-img {
     background-color: var(--color-sage);
-    height: 380px;
     width: 100%;
+    aspect-ratio: 3 / 4;
+    height: auto;
     background-size: cover;
     background-position: center;
     margin-bottom: 15px;
@@ -1235,7 +1237,8 @@ footer {
 }
 
 .related-producto-img {
-    height: 250px;
+    aspect-ratio: 3 / 4;
+    height: auto;
 }
 
 .related-producto-info {
@@ -1251,9 +1254,28 @@ footer {
     font-size: 0.9rem;
 }
 
+@media (max-width: 1024px) and (min-width: 769px) {
+    header {
+        padding: 0 1.5rem;
+    }
+    .nav-links {
+        gap: 20px;
+    }
+    .logo-center {
+        max-height: 90px;
+    }
+}
+
 @media (max-width: 900px) {
+    .catalogo {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 25px;
+    }
     .related-catalogo {
         grid-template-columns: repeat(2, 1fr);
+    }
+    #destacados .producto:nth-child(n+4) {
+        display: none;
     }
 }
 
@@ -1498,17 +1520,49 @@ footer {
     /* =============================================
        DESTACADOS (home)
        ============================================= */
-    #destacados .producto:nth-child(n+3) {
-        display: none;
+    #destacados .catalogo {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 15px;
+        padding: 10px 0 15px 0;
+        margin-left: 0;
+        margin-right: 0;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-taupe) transparent;
     }
 
-    #destacados .catalogo {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
+    #destacados .catalogo::-webkit-scrollbar {
+        display: block !important;
+        height: 4px;
+    }
+
+    #destacados .catalogo::-webkit-scrollbar-track {
+        background: rgba(82, 61, 53, 0.08);
+        border-radius: 10px;
+    }
+
+    #destacados .catalogo::-webkit-scrollbar-thumb {
+        background-color: var(--color-taupe);
+        border-radius: 10px;
+    }
+
+    #destacados .producto {
+        display: flex;
+        flex: 0 0 47%;
+        scroll-snap-align: start;
+        height: auto;
+        flex-direction: column;
+    }
+
+    #destacados .producto:nth-child(n+4) {
+        display: flex;
     }
 
     #destacados .producto-img {
-        height: 200px;
+        aspect-ratio: 3 / 4;
+        height: auto;
     }
 
     #destacados .producto-info h3 {
@@ -1705,12 +1759,13 @@ footer {
        CATÁLOGO — 3 columnas en mobile
        ============================================= */
     .categoria-section .catalogo {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
     }
 
     .categoria-section .producto-img {
-        height: 150px;
+        aspect-ratio: 3 / 4;
+        height: auto;
     }
 
     .categoria-section .producto h3 {
@@ -1789,7 +1844,8 @@ footer {
     }
 
     .related-producto-img {
-        height: 180px;
+        aspect-ratio: 3 / 4;
+        height: auto;
     }
 
     .related-producto-info h3 {
