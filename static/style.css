@@ -717,6 +717,26 @@ button:hover, .btn-agregar:hover, .btn-personalizado:hover {
     text-transform: uppercase;
 }
 
+.yarn-stat-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: -10px; /* Acercarlo un poquito al 100% hecho a mano */
+}
+
+@keyframes gentle-wobble {
+    0% { transform: rotate(0deg); }
+    25% { transform: rotate(6deg); }
+    50% { transform: rotate(0deg); }
+    75% { transform: rotate(-6deg); }
+    100% { transform: rotate(0deg); }
+}
+
+.animated-yarn-ball {
+    transform-origin: 50% 50%;
+    animation: gentle-wobble 4s ease-in-out infinite;
+}
+
 .contacto-form-wrapper {
     flex: 1;
 }
@@ -991,7 +1011,8 @@ footer {
 }
 
 .accordion-header:hover {
-    color: var(--color-taupe);
+    background-color: var(--color-slate);
+    color: var(--color-offwhite);
 }
 
 .accordion-header.active {
@@ -1070,32 +1091,45 @@ footer {
 /* Swatches de colores */
 .color-swatches {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     flex-wrap: wrap;
-    margin-top: 8px;
+    margin-top: 10px;
 }
 
 .color-swatch {
-    border: 1px solid #ccb9a7;
-    padding: 5px 11px;
-    border-radius: 14px;
-    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1.5px solid #ccb9a7;
+    padding: 6px 14px;
+    border-radius: 24px;
+    font-size: 0.85rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
     background: transparent;
     color: #4b5a5a;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
 }
 
 .color-swatch:hover {
     border-color: var(--color-brown);
-    background-color: var(--color-brown);
-    color: var(--color-offwhite);
+    background-color: var(--color-cream);
+    color: var(--color-brown);
 }
 
 .color-swatch.selected {
     background: var(--color-brown);
     color: var(--color-offwhite);
     border-color: var(--color-brown);
+}
+
+.swatch-color-circle {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid rgba(0,0,0,0.15);
 }
 
 /* Lightbox Zoom */
@@ -1791,3 +1825,53 @@ footer {
         padding: 8px;
     }
 }
+
+/* ==========================================================================
+   HIGH-END ANIMATIONS & MICRO-INTERACTIONS (Tejidos Margot Premium)
+   ========================================================================== */
+
+/* --- Navigation & Header --- */
+.nav-links a {
+    position: relative;
+    padding-bottom: 4px;
+}
+.nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--color-brown);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.nav-links a:hover {
+    color: var(--color-brown) !important;
+}
+.nav-links a:hover::after {
+    transform: scaleX(1);
+}
+
+.logo-center {
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s ease !important;
+}
+.logo-center:hover {
+    transform: scale(1.05) rotate(-1deg);
+    filter: drop-shadow(0 12px 20px rgba(82, 61, 53, 0.15));
+}
+
+/* --- Badge Wiggle Micro-interaction --- */
+@keyframes cartWiggle {
+    0% { transform: scale(1); }
+    15% { transform: scale(1.3) rotate(-10deg); }
+    30% { transform: scale(1.3) rotate(10deg); }
+    45% { transform: scale(1.3) rotate(-10deg); }
+    60% { transform: scale(1.3) rotate(10deg); }
+    75% { transform: scale(1) rotate(0); }
+    100% { transform: scale(1) rotate(0); }
+}
+.cart-icon:hover .cart-badge {
+    animation: cartWiggle 0.8s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}

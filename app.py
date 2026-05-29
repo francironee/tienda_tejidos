@@ -40,6 +40,17 @@ db = SQLAlchemy(app)
 mp_access_token = os.environ.get('MP_ACCESS_TOKEN', 'APP_USR-814094876045551-050615-ce53a8ffac39556a6c210a230039f18b-93020827')
 mp_sdk = mercadopago.SDK(mp_access_token)
 
+# Tabla de asociación para la relación Muchos a Muchos entre Producto y Color
+producto_color = db.Table('producto_color',
+    db.Column('producto_id', db.Integer, db.ForeignKey('producto.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('color_id', db.Integer, db.ForeignKey('color.id', ondelete='CASCADE'), primary_key=True)
+)
+
+class Color(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(50), unique=True, nullable=False)
+    imagen_ref = db.Column(db.String(200), nullable=False)
+
 class Categoria(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(50), unique=True, nullable=False)
@@ -50,13 +61,14 @@ class Producto(db.Model):
     nombre = db.Column(db.String(100), unique=True, nullable=False)
     precio = db.Column(db.Float, nullable=False)
     stock = db.Column(db.Integer, default=0)
-    colores = db.Column(db.String(200), nullable=True)
+    colores = db.Column(db.String(200), nullable=True) # Mantenido por compatibilidad
     img = db.Column(db.String(200), nullable=False)
     desc = db.Column(db.Text, nullable=True)
     materiales = db.Column(db.Text, nullable=True)
     categoria_id = db.Column(db.Integer, db.ForeignKey('categoria.id'), nullable=False)
     destacado = db.Column(db.Boolean, default=False)
     oculto = db.Column(db.Boolean, default=False)
+    colores_rel = db.relationship('Color', secondary=producto_color, backref=db.backref('productos', lazy='dynamic'))
 
 class ImagenSecundaria(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -524,17 +536,25 @@ def admin_dashboard():
 @login_required
 def admin_add_producto():
     nombre = request.form.get('nombre')
-    precio = float(request.form.get('precio', 0))
+    
+    # Limpiar formato de miles (puntos/comas) antes de convertir a float
+    precio_raw = request.form.get('precio', '0')
+    precio_clean = precio_raw.replace('.', '').replace(',', '')
+    try:
+        precio = float(precio_clean)
+    except ValueError:
+        precio = 0.0
+        
     stock = int(request.form.get('stock', 0))
     categoria_id = int(request.form.get('categoria_id'))
     desc = request.form.get('desc')
     materiales = request.form.get('materiales', '')
-    colores_raw = request.form.get('colores', '')
-    # Sort colors alphabetically
-    if colores_raw.strip():
-        colores = ', '.join(sorted([c.strip() for c in colores_raw.split(',') if c.strip()], key=lambda x: x.lower()))
-    else:
-        colores = ''
+    
+    # Obtener la lista de IDs de colores seleccionados
+    colores_ids_raw = request.form.getlist('colores')
+    colores_ids = [int(cid) for cid in colores_ids_raw if cid.isdigit()]
+    selected_colors = Color.query.filter(Color.id.in_(colores_ids)).all()
+    colores_string = ', '.join([c.nombre for c in selected_colors])
 
     file = request.files.get('img')
     img_filename = 'placeholder1.png'
@@ -552,15 +572,17 @@ def admin_add_producto():
         categoria_id=categoria_id,
         desc=desc,
         materiales=materiales,
-        colores=colores,
+        colores=colores_string, # Compatibilidad
         img=img_filename,
         destacado=False
     )
+    nuevo_producto.colores_rel = selected_colors
     db.session.add(nuevo_producto)
     db.session.commit()
 
     # Handle extra images
     extra_files = request.files.getlist('extra_imgs')
+    extra_imgs_added = []
     for idx, f in enumerate(extra_files):
         if f and allowed_file(f.filename):
             fname = secure_filename(f.filename)
@@ -569,7 +591,24 @@ def admin_add_producto():
             f.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_fname))
             img_secundaria = ImagenSecundaria(filename=unique_fname, producto_id=nuevo_producto.id, orden=idx)
             db.session.add(img_secundaria)
+            extra_imgs_added.append(unique_fname)
     db.session.commit()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+        return {
+            'success': True,
+            'message': 'Prenda añadida correctamente.',
+            'producto': {
+                'id': nuevo_producto.id,
+                'nombre': nuevo_producto.nombre,
+                'precio': nuevo_producto.precio,
+                'stock': nuevo_producto.stock,
+                'categoria': nuevo_producto.categoria_rel.nombre,
+                'img': url_for('static', filename=nuevo_producto.img),
+                'oculto': nuevo_producto.oculto,
+                'colores': [c.nombre for c in nuevo_producto.colores_rel]
+            }
+        }
 
     flash('Prenda añadida correctamente.', 'success')
     return redirect(url_for('admin_dashboard'))
@@ -579,12 +618,26 @@ def admin_add_producto():
 def admin_edit_producto(id):
     producto = Producto.query.get_or_404(id)
     producto.nombre = request.form.get('nombre')
-    producto.precio = float(request.form.get('precio', 0))
+    
+    # Limpiar formato de miles (puntos/comas) antes de convertir a float
+    precio_raw = request.form.get('precio', '0')
+    precio_clean = precio_raw.replace('.', '').replace(',', '')
+    try:
+        producto.precio = float(precio_clean)
+    except ValueError:
+        producto.precio = 0.0
+        
     producto.stock = int(request.form.get('stock', 0))
     producto.desc = request.form.get('desc')
     producto.materiales = request.form.get('materiales', '')
-    producto.colores = ', '.join(sorted([c.strip() for c in request.form.get('colores', '').split(',') if c.strip()], key=lambda x: x.lower())) if request.form.get('colores', '').strip() else ''
     producto.destacado = True if request.form.get('destacado') == 'on' else False
+    
+    # Obtener y asociar los colores seleccionados
+    colores_ids_raw = request.form.getlist('colores')
+    colores_ids = [int(cid) for cid in colores_ids_raw if cid.isdigit()]
+    selected_colors = Color.query.filter(Color.id.in_(colores_ids)).all()
+    producto.colores_rel = selected_colors
+    producto.colores = ', '.join([c.nombre for c in selected_colors]) # Compatibilidad
     
     file = request.files.get('img')
     if file and allowed_file(file.filename):
@@ -595,6 +648,7 @@ def admin_edit_producto(id):
         producto.img = unique_filename
         
     extra_files = request.files.getlist('extra_imgs')
+    extra_imgs_added = []
     for f in extra_files:
         if f and allowed_file(f.filename):
             filename = secure_filename(f.filename)
@@ -603,8 +657,32 @@ def admin_edit_producto(id):
             f.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
             img_secundaria = ImagenSecundaria(filename=unique_filename, producto_id=producto.id)
             db.session.add(img_secundaria)
+            db.session.commit() # Guardamos para obtener el ID de la imagen secundaria
+            extra_imgs_added.append({
+                'id': img_secundaria.id,
+                'filename': url_for('static', filename=img_secundaria.filename)
+            })
         
     db.session.commit()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+        return {
+            'success': True,
+            'message': 'Producto actualizado correctamente.',
+            'producto': {
+                'id': producto.id,
+                'nombre': producto.nombre,
+                'precio': producto.precio,
+                'stock': producto.stock,
+                'desc': producto.desc,
+                'materiales': producto.materiales,
+                'destacado': producto.destacado,
+                'img': url_for('static', filename=producto.img),
+                'colores': [c.nombre for c in producto.colores_rel],
+                'extra_imgs': extra_imgs_added
+            }
+        }
+        
     flash('Producto actualizado correctamente.', 'success')
     return redirect(url_for('admin_dashboard'))
 
@@ -655,12 +733,45 @@ def admin_toggle_visibility(id):
 @app.route('/admin/reorder_images/<int:product_id>', methods=['POST'])
 @login_required
 def admin_reorder_images(product_id):
+    producto = Producto.query.get_or_404(product_id)
     data = request.get_json()
     new_order = data.get('order', [])
-    for index, img_id in enumerate(new_order):
-        img = ImagenSecundaria.query.get(int(img_id))
-        if img and img.producto_id == product_id:
-            img.orden = index
+    
+    if not new_order:
+        return {'ok': True}
+        
+    first_item = new_order[0]
+    promoted_sec_id = None
+    
+    # Si la primera foto en el nuevo orden es una imagen secundaria, hacemos swap
+    if first_item.get('type') == 'secondary':
+        sec_id = int(first_item.get('id'))
+        img_sec = ImagenSecundaria.query.get(sec_id)
+        if img_sec and img_sec.producto_id == product_id:
+            old_main = producto.img
+            producto.img = img_sec.filename
+            img_sec.filename = old_main
+            promoted_sec_id = sec_id
+            
+    # Reordenamos las imágenes secundarias restantes
+    sec_records_ordered = []
+    for item in new_order[1:]:
+        if item.get('type') == 'secondary':
+            sec_id = int(item.get('id'))
+            img_record = ImagenSecundaria.query.get(sec_id)
+            if img_record and img_record.producto_id == product_id:
+                sec_records_ordered.append(img_record)
+        elif item.get('type') == 'main':
+            # La imagen principal original pasó a ser secundaria, ahora se guarda en el registro de la imagen que ascendió
+            if promoted_sec_id:
+                img_record = ImagenSecundaria.query.get(promoted_sec_id)
+                if img_record and img_record.producto_id == product_id:
+                    sec_records_ordered.append(img_record)
+                    
+    # Asignamos el nuevo orden consecutivo
+    for index, img_record in enumerate(sec_records_ordered):
+        img_record.orden = index
+        
     db.session.commit()
     return {'ok': True}
 
@@ -705,17 +816,95 @@ def admin_add_categoria():
     if nombre:
         existing = Categoria.query.filter(Categoria.nombre.ilike(nombre)).first()
         if existing:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+                return {'success': False, 'message': f'La categoría "{nombre}" ya existe.'}, 400
             flash(f'La categoría "{nombre}" ya existe.', 'error')
         else:
             nueva = Categoria(nombre=nombre)
             db.session.add(nueva)
             db.session.commit()
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+                return {
+                    'success': True,
+                    'message': f'Categoría "{nombre}" creada correctamente.',
+                    'categoria': {'id': nueva.id, 'nombre': nueva.nombre}
+                }
             flash(f'Categoría "{nombre}" creada correctamente.', 'success')
+    else:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return {'success': False, 'message': 'El nombre de la categoría es requerido.'}, 400
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/add_color', methods=['POST'])
+@login_required
+def admin_add_color():
+    nombre = request.form.get('nombre_color', '').strip()
+    file = request.files.get('img_color')
+    if not nombre or not file:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return {'success': False, 'message': 'El nombre y la foto de referencia son requeridos.'}, 400
+        flash('Nombre y foto de referencia son requeridos.', 'error')
+        return redirect(url_for('admin_dashboard'))
+        
+    existing = Color.query.filter(Color.nombre.ilike(nombre)).first()
+    if existing:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return {'success': False, 'message': f'El color "{nombre}" ya existe.'}, 400
+        flash(f'El color "{nombre}" ya existe.', 'error')
+        return redirect(url_for('admin_dashboard'))
+
+    img_filename = 'placeholder1.png'
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        name, ext = os.path.splitext(filename)
+        unique_filename = f"color_{name}_{uuid.uuid4().hex[:8]}{ext}"
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
+        img_filename = unique_filename
+
+    nuevo_color = Color(nombre=nombre, imagen_ref=img_filename)
+    db.session.add(nuevo_color)
+    db.session.commit()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+        return {
+            'success': True,
+            'message': f'Color "{nombre}" creado correctamente.',
+            'color': {
+                'id': nuevo_color.id,
+                'nombre': nuevo_color.nombre,
+                'imagen_ref': url_for('static', filename=nuevo_color.imagen_ref)
+            }
+        }
+        
+    flash(f'Color "{nombre}" creado correctamente.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_color/<int:id>', methods=['POST'])
+@login_required
+def admin_delete_color(id):
+    color = Color.query.get_or_404(id)
+    nombre = color.nombre
+    if color.imagen_ref and color.imagen_ref != 'placeholder1.png':
+        try:
+            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], color.imagen_ref))
+        except Exception as e:
+            print(f"Error al borrar archivo de color: {e}")
+            
+    db.session.delete(color)
+    db.session.commit()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+        return {'success': True, 'message': f'Color "{nombre}" eliminado correctamente.'}
+        
+    flash(f'Color "{nombre}" eliminado.', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.context_processor
-def inject_categorias():
-    return dict(todas_las_categorias=Categoria.query.all())
+def inject_categorias_y_colores():
+    return dict(
+        todas_las_categorias=Categoria.query.all(),
+        todos_los_colores=Color.query.all()
+    )
 
 init_db()
 

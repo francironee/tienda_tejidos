@@ -41,12 +41,15 @@
                 <p>{{ item.desc }}</p>
             </div>
 
-            {% if item.colores %}
+            {% if item.colores_rel %}
             <div class="boutique-colors">
                 <span class="color-label">Elige un color:</span>
                 <div class="color-swatches">
-                    {% for color in item.colores.split(',') %}
-                    <button class="color-swatch" onclick="selectColor(this, '{{ color.strip() }}')">{{ color.strip() }}</button>
+                    {% for color in item.colores_rel %}
+                    <button class="color-swatch" onclick="selectColor(this, '{{ color.nombre }}')">
+                        <img src="{{ url_for('static', filename=color.imagen_ref) }}" class="swatch-color-circle" alt="{{ color.nombre }}">
+                        <span>{{ color.nombre }}</span>
+                    </button>
                     {% endfor %}
                 </div>
             </div>
@@ -77,7 +80,7 @@
 
             <div class="boutique-actions">
                 {% if item.stock > 0 %}
-                <button type="button" id="btn-add-cart" class="btn-boutique-add" onclick="addToCartAjax('{{ item.nombre }}', {{ 'true' if item.colores else 'false' }})">AÑADIR AL CARRITO</button>
+                <button type="button" id="btn-add-cart" class="btn-boutique-add" onclick="addToCartAjax('{{ item.nombre }}', {{ 'true' if item.colores_rel else 'false' }})">AÑADIR AL CARRITO</button>
                 {% else %}
                 <button type="button" class="btn-boutique-add disabled" disabled>SIN STOCK</button>
                 <a href="https://wa.me/5491125193017?text=Hola!%20Quiero%20encargar%20el%20tejido%20*{{ item.nombre | urlencode }}*%20que%20vi%20en%20la%20web.%20%C2%BFMe%20pueden%20avisar%20cuando%20haya%20disponibilidad%3F%20%F0%9F%A7%B6" target="_blank" class="btn-boutique-encargar">ENCARGAR ESTE TEJIDO</a>

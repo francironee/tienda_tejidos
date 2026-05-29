@@ -2,86 +2,301 @@
 
 {% block content %}
 <style>
-    /* Estilos específicos para un admin minimalista y fácil de usar */
+    /* Estilos Premium y Responsivos para el Panel de Administrador */
+    .admin-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        font-family: 'Montserrat', sans-serif;
+    }
     .admin-header {
         text-align: center;
-        padding-bottom: 20px;
+        padding-bottom: 25px;
         border-bottom: 1px solid var(--color-cream);
         margin-bottom: 40px;
     }
     .admin-title {
         font-family: 'Playfair Display', serif;
-        font-size: 2.5rem;
+        font-size: 2.8rem;
         color: var(--color-brown);
         margin-bottom: 10px;
     }
     .admin-btn-logout {
         color: var(--color-slate);
-        text-decoration: underline;
-        font-size: 1.1rem;
+        text-decoration: none;
+        font-size: 1.05rem;
+        font-weight: 600;
+        border-bottom: 2px solid transparent;
+        transition: border-color 0.2s ease;
     }
-    
-    .admin-section {
-        background-color: var(--color-offwhite);
-        border: 1px solid var(--color-cream);
-        border-radius: 8px;
-        padding: 40px;
+    .admin-btn-logout:hover {
+        border-color: var(--color-brown);
+    }
+
+    /* SECCIÓN INVENTARIO COMPACTA (Cabecera en una fila) */
+    .inventory-section {
+        background-color: white;
         margin-bottom: 50px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
     }
-    .admin-layout {
+    .inventory-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        gap: 20px;
+        flex-wrap: wrap;
+        background-color: var(--color-offwhite);
+        padding: 15px 25px;
+        border-radius: 12px;
+        border: 1px solid var(--color-cream);
+    }
+    .inventory-title-main {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.8rem;
+        color: var(--color-brown);
+        margin: 0;
+        flex-shrink: 0;
+    }
+    .inventory-search {
+        max-width: 380px;
+        flex-grow: 1;
+        padding: 10px 15px;
+        border: 1.5px solid var(--color-cream);
+        border-radius: 8px;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.9rem;
+        box-sizing: border-box;
+    }
+
+    /* Toggle Vista: Tarjetas vs Lista */
+    .view-toggle-container {
+        display: flex;
+        border: 2px solid var(--color-cream);
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: white;
+        flex-shrink: 0;
+    }
+    .view-toggle-btn {
+        background: none;
+        border: none;
+        padding: 10px 18px;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--color-slate);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+    .view-toggle-btn.active {
+        background-color: var(--color-brown);
+        color: white;
+    }
+
+    /* MODO TARJETAS (VISTA POR DEFECTO) */
+    .admin-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+    .admin-card {
+        background: white;
+        border: 2px solid var(--color-cream);
+        border-radius: 10px;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .admin-section.admin-add-form {
-        max-width: 760px;
-        margin: 0 auto 45px auto;
-        padding: 28px;
+    .admin-card:hover {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.04);
     }
-    .admin-section.admin-category-form {
-        max-width: 330px;
-        margin: 0 auto 14px auto;
-        padding: 10px 12px;
+    .admin-card-img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
     }
-    .admin-category-form .admin-section-title {
-        font-size: 1.05rem;
-        margin-bottom: 10px;
+    .admin-card-body {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
     }
-    .admin-category-form .form-group {
-        margin-bottom: 8px;
+    .admin-card-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.25rem;
+        color: var(--color-brown);
+        margin: 0 0 8px 0;
+        font-weight: 700;
     }
-    .admin-category-form .form-label {
-        font-size: 0.78rem;
-        margin-bottom: 4px;
+    .admin-card-info {
+        font-size: 0.88rem;
+        color: var(--color-slate);
+        margin: 0 0 5px 0;
+        line-height: 1.4;
     }
-    .admin-category-form .form-input {
-        padding: 8px 10px;
-        font-size: 0.82rem;
-        border-width: 1px;
+    .admin-card-actions {
+        margin-top: auto;
+        padding-top: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
     }
-    .admin-category-form .admin-btn-primary {
+    
+    /* Botones de acción */
+    .btn-edit, .btn-toggle, .btn-delete {
+        width: 100%;
+        border: none;
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        text-align: center;
+        transition: background-color 0.2s ease;
+        box-sizing: border-box;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .btn-edit {
+        background-color: var(--color-taupe);
+        color: white;
+    }
+    .btn-edit:hover {
+        background-color: var(--color-slate);
+    }
+    .btn-toggle {
+        background-color: #5bc0de;
+        color: white;
+    }
+    .btn-toggle:hover {
+        background-color: #31b0d5;
+    }
+    .btn-delete {
+        background-color: #d9534f;
+        color: white;
+    }
+    .btn-delete:hover {
+        background-color: #c9302c;
+    }
+
+    .product-hidden-badge {
+        display: inline-block;
+        background-color: #f0ad4e;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
         font-size: 0.72rem;
-        padding: 9px 12px;
-        letter-spacing: 0.7px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        align-self: flex-start;
+    }
+
+    /* MODO LISTA (COMPACTO SIN IMÁGENES, TODO EN UNA FILA) */
+    .admin-cards-grid.list-view {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .admin-cards-grid.list-view .admin-card {
+        flex-direction: row;
+        align-items: center;
+        padding: 10px 20px;
+        gap: 0;
+        height: auto;
+        border: 1px solid var(--color-cream);
+        box-shadow: none;
+    }
+    .admin-cards-grid.list-view .admin-card-img {
+        display: none !important; /* Quitar imágenes para ahorrar espacio */
+    }
+    .admin-cards-grid.list-view .admin-card-body {
+        display: grid;
+        grid-template-columns: 2fr 1.2fr 1fr 1fr 2fr 2.5fr;
+        align-items: center;
+        width: 100%;
+        padding: 0;
+        gap: 15px;
+    }
+    @media (max-width: 900px) {
+        .admin-cards-grid.list-view .admin-card-body {
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+    }
+    .admin-cards-grid.list-view .admin-card-title {
+        font-size: 1.1rem;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .admin-cards-grid.list-view .admin-card-info {
+        margin: 0;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+    .admin-cards-grid.list-view .product-hidden-badge {
+        margin: 0;
+        align-self: center;
+    }
+    .admin-cards-grid.list-view .admin-card-actions {
+        margin: 0;
+        padding: 0;
+        flex-direction: row;
+        gap: 6px;
+        justify-content: flex-end;
+    }
+    .admin-cards-grid.list-view .btn-edit,
+    .admin-cards-grid.list-view .btn-toggle,
+    .admin-cards-grid.list-view .btn-delete {
+        width: auto;
+        padding: 6px 10px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+
+    /* SECCIÓN DE FORMULARIOS COLAPSABLES AL FINAL */
+    .admin-forms-collapsibles {
+        margin-top: 60px;
+        border-top: 1px solid var(--color-cream);
+        padding-top: 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
     }
     .admin-collapsible {
-        order: 3;
-        margin: 0 auto 16px auto;
-        max-width: 760px;
         width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+        border: 1px solid var(--color-cream);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--color-offwhite);
     }
     .admin-collapsible > summary {
         cursor: pointer;
         list-style: none;
         background: white;
-        border: 1px solid var(--color-cream);
-        border-radius: 8px;
-        padding: 13px 16px;
+        padding: 15px 20px;
         font-family: 'Montserrat', sans-serif;
-        font-size: 0.9rem;
+        font-size: 1rem;
         font-weight: 700;
         color: var(--color-brown);
         letter-spacing: 0.5px;
+        border-bottom: 1px solid transparent;
+        transition: background-color 0.2s ease;
+    }
+    .admin-collapsible > summary:hover {
+        background-color: var(--color-offwhite);
+    }
+    .admin-collapsible[open] > summary {
+        border-bottom-color: var(--color-cream);
+        background-color: var(--color-offwhite);
     }
     .admin-collapsible > summary::-webkit-details-marker {
         display: none;
@@ -89,62 +304,80 @@
     .admin-collapsible > summary::after {
         content: '+';
         float: right;
-        font-size: 1rem;
+        font-size: 1.2rem;
         color: var(--color-slate);
     }
     .admin-collapsible[open] > summary::after {
         content: '−';
     }
-    .inventory-section {
-        order: 2;
-    }
-    .admin-section-title {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.8rem;
-        color: var(--color-brown);
-        margin-bottom: 30px;
-        text-align: center;
-    }
 
-    /* Formularios amigables */
+    /* Formularios Pequeños y Ajustados */
+    .admin-section {
+        padding: 25px;
+        background: white;
+    }
     .form-group {
-        margin-bottom: 25px;
+        margin-bottom: 18px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .form-row-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    @media (max-width: 600px) {
+        .form-row-2 {
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
     }
     .form-label {
         display: block;
-        font-family: 'Montserrat', sans-serif;
-        font-weight: 600;
-        font-size: 1.1rem;
+        font-weight: 700;
+        font-size: 0.85rem;
         color: var(--color-slate);
-        margin-bottom: 8px;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     .form-help {
         display: block;
-        font-family: 'Montserrat', sans-serif;
-        font-size: 0.9rem;
+        font-size: 0.78rem;
         color: var(--color-taupe);
-        margin-bottom: 8px;
+        margin-bottom: 5px;
+        line-height: 1.3;
     }
     .form-input {
         width: 100%;
-        padding: 15px;
-        font-size: 1.1rem;
-        border: 2px solid var(--color-cream);
+        padding: 10px 12px;
+        font-size: 0.9rem;
+        border: 1.5px solid var(--color-cream);
         border-radius: 6px;
         font-family: 'Montserrat', sans-serif;
         background-color: white;
+        box-sizing: border-box;
+        transition: border-color 0.2s ease;
     }
     .form-input:focus {
         outline: none;
         border-color: var(--color-sage);
     }
+    select.form-input {
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238c8275' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 14px;
+        padding-right: 35px;
+    }
     
     .admin-btn-primary {
         background-color: var(--color-brown);
         color: white;
-        font-size: 1.2rem;
+        font-size: 0.9rem;
         font-weight: 600;
-        padding: 15px 30px;
+        padding: 12px 18px;
         border: none;
         border-radius: 6px;
         cursor: pointer;
@@ -152,235 +385,277 @@
         font-family: 'Montserrat', sans-serif;
         text-transform: uppercase;
         letter-spacing: 1px;
+        transition: background-color 0.2s ease, transform 0.1s ease;
     }
     .admin-btn-primary:hover {
         background-color: var(--color-slate);
     }
-    
-    /* Tarjetas de Inventario */
-    .admin-cards-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-        gap: 16px;
-    }
-    .admin-card {
-        background: white;
-        border: 2px solid var(--color-cream);
-        border-radius: 8px;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-    }
-    .admin-card-img {
-        width: 100%;
-        height: 185px;
-        object-fit: cover;
-    }
-    .admin-card-body {
-        padding: 14px;
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-    }
-    .admin-card-title {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.15rem;
-        color: var(--color-brown);
-        margin-bottom: 8px;
-    }
-    .admin-card-info {
-        font-family: 'Montserrat', sans-serif;
-        font-size: 0.86rem;
-        color: var(--color-slate);
-        margin-bottom: 4px;
-    }
-    .admin-card-actions {
-        margin-top: auto;
-        padding-top: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    .btn-edit {
-        background-color: var(--color-taupe);
-        color: white;
-        border: none;
-        padding: 10px;
-        border-radius: 4px;
-        font-size: 0.84rem;
-        cursor: pointer;
-        font-weight: 600;
-        text-align: center;
-        text-decoration: none;
-    }
-    .btn-delete {
-        background-color: #d9534f;
-        color: white;
-        border: none;
-        padding: 10px;
-        border-radius: 4px;
-        font-size: 0.84rem;
-        cursor: pointer;
-        font-weight: 600;
-        text-align: center;
-    }
-    .btn-toggle {
-        background-color: #5bc0de;
-        color: white;
-        border: none;
-        padding: 10px;
-        border-radius: 4px;
-        font-size: 0.84rem;
-        cursor: pointer;
-        font-weight: 600;
-        text-align: center;
-    }
-    .btn-toggle:hover {
-        background-color: #46b8da;
-    }
-    .product-hidden-badge {
-        display: inline-block;
-        background-color: #f0ad4e;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        margin-bottom: 8px;
-    }
-    .inventory-tools {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        margin-bottom: 20px;
-    }
-    .inventory-search {
-        width: 100%;
-        max-width: 360px;
-        padding: 10px 12px;
-        border: 1px solid var(--color-cream);
-        border-radius: 6px;
-        font-family: 'Montserrat', sans-serif;
-        font-size: 0.88rem;
-        background: white;
-    }
-    .inventory-letter-filters {
+
+    /* Contenedor de colores activos y Chips */
+    .active-colors-container {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 8px;
+        margin-bottom: 12px;
     }
-    .letter-filter-btn {
-        width: auto;
-        margin: 0;
-        padding: 8px 10px;
-        background: white;
+    .active-color-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background-color: var(--color-offwhite);
+        border: 1.5px solid var(--color-brown);
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--color-brown);
+    }
+    .active-color-chip .color-thumbnail-circle {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+    .btn-remove-active-color {
+        background: none;
+        border: none;
+        color: #d9534f;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 0.95rem;
+        padding: 0 0 0 4px;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+    }
+    .btn-remove-active-color:hover {
+        color: #c9302c;
+    }
+
+    /* Botón y menú desplegable */
+    .color-selector-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+    .btn-show-colors-dropdown {
+        background-color: white;
+        border: 1.5px solid var(--color-cream);
+        color: var(--color-brown);
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 8px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.2s ease;
+        font-family: 'Montserrat', sans-serif;
+    }
+    .btn-show-colors-dropdown:hover {
+        border-color: var(--color-brown);
+        background-color: var(--color-offwhite);
+    }
+    .colors-dropdown-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 100;
+        background-color: white;
+        border: 1.5px solid var(--color-cream);
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        max-height: 180px;
+        overflow-y: auto;
+        width: 180px;
+        margin-top: 5px;
+        display: none;
+    }
+    .colors-dropdown-item {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
         color: var(--color-slate);
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+    }
+    .colors-dropdown-item:hover {
+        background-color: var(--color-cream);
+        color: var(--color-brown);
+    }
+    .colors-dropdown-item.selected {
+        background-color: var(--color-offwhite);
+        color: #ccc;
+        cursor: not-allowed;
+    }
+    .color-checkbox-name {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--color-slate);
+    }
+
+    /* Listado de Colores Creados */
+    .admin-colors-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 8px;
+        margin-top: 15px;
+        border-top: 1px solid var(--color-cream);
+        padding-top: 15px;
+    }
+    .admin-color-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: white;
         border: 1px solid var(--color-cream);
         border-radius: 6px;
-        font-size: 0.75rem;
+        padding: 5px 10px;
+    }
+    .admin-color-item-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .admin-color-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+    .admin-color-name {
+        font-size: 0.8rem;
         font-weight: 600;
-        letter-spacing: 0.5px;
+        color: var(--color-slate);
     }
-    .letter-filter-btn.active,
-    .letter-filter-btn:hover {
-        background: var(--color-brown);
-        color: white;
-        border-color: var(--color-brown);
+    .btn-delete-color {
+        background: none;
+        border: none;
+        color: #d9534f;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 0.75rem;
+        padding: 2px;
     }
-    
+    .btn-delete-color:hover {
+        text-decoration: underline;
+    }
+
+    /* Formulario de Edición Desplegable */
     .edit-form-container {
         display: none;
         background-color: var(--color-cream);
-        padding: 18px;
-        margin-top: 15px;
+        padding: 20px;
+        margin-top: 10px;
         border-radius: 8px;
+        border: 1px solid rgba(0,0,0,0.05);
+        box-sizing: border-box;
+    }
+    .admin-cards-grid.list-view .edit-form-container {
+        width: 100%;
     }
     .edit-form-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 12px;
+        gap: 15px;
+    }
+    @media (max-width: 700px) {
+        .edit-form-grid {
+            grid-template-columns: 1fr;
+        }
     }
     .edit-form-grid .form-group {
-        margin-bottom: 10px;
-    }
-    .edit-form-container .form-label {
-        font-size: 0.92rem;
-        margin-bottom: 4px;
-    }
-    .edit-form-container .form-help {
-        font-size: 0.8rem;
-        margin-bottom: 4px;
-    }
-    .edit-form-container .form-input {
-        padding: 10px;
-        font-size: 0.9rem;
+        margin-bottom: 0;
     }
     .edit-form-full {
         grid-column: 1 / -1;
     }
 </style>
 
-<div class="admin-layout" style="max-width: 1000px; margin: 0 auto; padding: 40px 20px;">
+<div class="admin-container">
     
     <div class="admin-header">
-        <h2 class="admin-title">Panel de Administración</h2>
+        <h2 class="admin-title">Panel de Control</h2>
         <a href="{{ url_for('admin_logout') }}" class="admin-btn-logout">Cerrar Sesión</a>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div style="padding: 20px; margin-bottom: 30px; border-radius: 6px; background-color: #d4edda; border: 2px solid #c3e6cb; color: #155724; text-align: center; font-size: 1.2rem; font-weight: bold;">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+    <!-- NOTIFICACIÓN DE MENSAJES FLASH -->
+    <div id="flash-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-alert" style="padding: 15px 20px; margin-bottom: 30px; border-radius: 8px; background-color: #d4edda; border: 1.5px solid #c3e6cb; color: #155724; text-align: center; font-size: 1.1rem; font-weight: bold;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
 
     <!-- SECCIÓN: INVENTARIO ACTUAL -->
-    <div class="admin-section inventory-section" style="background-color: transparent; border: none; padding: 0; box-shadow: none;">
-        <h3 class="admin-section-title" style="margin-bottom: 20px; text-align: left;">Inventario Actual (Tus prendas)</h3>
-        <div class="inventory-tools">
+    <div class="inventory-section">
+        
+        <!-- CABECERA EN UNA FILA -->
+        <div class="inventory-top-row">
+            <h3 class="inventory-title-main">Tu Inventario</h3>
+            
+            <!-- BUSCADOR -->
             <input type="text" id="inventory-search" class="inventory-search" placeholder="Buscar prenda por nombre...">
-            <span class="form-help" style="margin: 0;">Filtrar por inicial:</span>
-            <div class="inventory-letter-filters">
-                <button type="button" class="letter-filter-btn active" data-letter="TODAS">TODAS</button>
-                {% for letra in letras_iniciales %}
-                <button type="button" class="letter-filter-btn" data-letter="{{ letra }}">{{ letra }}</button>
-                {% endfor %}
+            
+            <!-- TOGGLE DE VISTA -->
+            <div class="view-toggle-container">
+                <button type="button" class="view-toggle-btn active" id="btn-view-cards" onclick="changeInventoryView('grid')">
+                    <i class="fa-solid fa-table-cells-large"></i> Tarjetas
+                </button>
+                <button type="button" class="view-toggle-btn" id="btn-view-list" onclick="changeInventoryView('list')">
+                    <i class="fa-solid fa-list"></i> Lista
+                </button>
             </div>
         </div>
-        <div class="admin-cards-grid">
+
+        <!-- LISTADO / CUADRÍCULA DE PRODUCTOS -->
+        <div class="admin-cards-grid" id="inventory-container">
             {% for p in productos %}
             <div class="admin-card" id="product-{{ p.id }}" data-product-name="{{ p.nombre | upper }}">
                 <img src="{{ url_for('static', filename=p.img) }}" class="admin-card-img" alt="{{ p.nombre }}">
                 <div class="admin-card-body">
-                    <h4 class="admin-card-title">{{ p.nombre }}</h4>
-                    {% if p.oculto %}<span class="product-hidden-badge">⚠ OCULTO</span>{% endif %}
+                    <h4 class="admin-card-title">
+                        <span class="product-name-span">{{ p.nombre }}</span>
+                        {% if p.oculto %}<span class="product-hidden-badge" style="margin-left: 10px; margin-bottom: 0;">⚠ OCULTO</span>{% endif %}
+                    </h4>
                     <p class="admin-card-info"><strong>Categoría:</strong> {{ p.categoria_rel.nombre }}</p>
                     <p class="admin-card-info"><strong>Precio:</strong> $ {{ "{:,.0f}".format(p.precio).replace(',', '.') }}</p>
-                    <p class="admin-card-info"><strong>Disponibles:</strong> {{ p.stock }} unidades</p>
+                    <p class="admin-card-info"><strong>Stock:</strong> {{ p.stock }} u.</p>
+                    <p class="admin-card-info"><strong>Colores:</strong> 
+                        {% if p.colores_rel %}
+                            {{ p.colores_rel | map(attribute='nombre') | join(', ') }}
+                        {% else %}
+                            <span style="color:#aaa; font-style:italic;">Ninguno</span>
+                        {% endif %}
+                    </p>
                     
                     <div class="admin-card-actions">
                         <button type="button" class="btn-edit" onclick="toggleEditForm({{ p.id }})">EDITAR</button>
                         
                         <form action="{{ url_for('admin_toggle_visibility', id=p.id) }}" method="POST" style="margin: 0;">
-                            <button type="submit" class="btn-toggle" style="width: 100%;">
-                                {% if p.oculto %}MOSTRAR PRODUCTO{% else %}OCULTAR PRODUCTO{% endif %}
+                            <button type="submit" class="btn-toggle">
+                                {% if p.oculto %}MOSTRAR{% else %}OCULTAR{% endif %}
                             </button>
                         </form>
                         
                         <form action="{{ url_for('admin_delete_producto', id=p.id) }}" method="POST" style="margin: 0;">
-                            <button type="submit" class="btn-delete" onclick="return confirm('¿Estás segura de que quieres borrar la prenda: {{ p.nombre }}? Esta acción no se puede deshacer.');" style="width: 100%;">BORRAR PRODUCTO</button>
+                            <button type="submit" class="btn-delete">BORRAR</button>
                         </form>
                     </div>
                 </div>
             </div>
             
-            <!-- Formulario de Edición (Oculto por defecto) que se expande bajo la tarjeta -->
+            <!-- FORMULARIO DE EDICIÓN (DESPLEGABLE BAJO LA TARJETA O FILA) -->
             <div id="edit-form-{{ p.id }}" class="edit-form-container" style="grid-column: 1 / -1;">
-                <h4 style="font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--color-brown); margin-bottom: 12px;">Editando: {{ p.nombre }}</h4>
-                <form action="{{ url_for('admin_edit_producto', id=p.id) }}" method="POST" enctype="multipart/form-data">
+                <h4 style="font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--color-brown); margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1.5px solid var(--color-brown);">Editando: {{ p.nombre }}</h4>
+                <form id="form-edit-product-{{ p.id }}" action="{{ url_for('admin_edit_producto', id=p.id) }}" method="POST" enctype="multipart/form-data">
                     <div class="edit-form-grid">
                         <div class="form-group">
                             <label class="form-label">Nombre de la prenda:</label>
@@ -389,7 +664,7 @@
 
                         <div class="form-group">
                             <label class="form-label">Precio ($):</label>
-                            <input type="number" name="precio" value="{{ p.precio }}" class="form-input" required>
+                            <input type="text" name="precio" value="{{ '{:,.0f}'.format(p.precio).replace(',', '.') }}" class="form-input price-formatter-input" required>
                         </div>
 
                         <div class="form-group">
@@ -398,164 +673,422 @@
                         </div>
 
                         <div class="form-group">
+                            <label class="form-label">¿A qué categoría pertenece?</label>
+                            <select name="categoria_id" class="form-input" required>
+                                {% for cat in todas_las_categorias %}
+                                    <option value="{{ cat.id }}" {% if cat.id == p.categoria_id %}selected{% endif %}>{{ cat.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group edit-form-full">
                             <label class="form-label">Descripción breve:</label>
                             <textarea name="desc" class="form-input" rows="2" required>{{ p.desc }}</textarea>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group edit-form-full">
                             <label class="form-label">Medidas de la prenda:</label>
                             <textarea name="materiales" class="form-input" rows="2">{{ p.materiales or '' }}</textarea>
                         </div>
                         
-                        <div class="form-group">
+                        <!-- SELECCIÓN DE COLORES EN EDICIÓN -->
+                        <div class="form-group edit-form-full">
                             <label class="form-label">Colores disponibles:</label>
-                            <input type="text" name="colores" value="{{ p.colores or '' }}" class="form-input">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Cambiar foto principal:</label>
-                            <input type="file" name="img" accept="image/*" class="form-input">
+                            <div class="active-colors-container" id="active-colors-container-edit-{{ p.id }}">
+                                {% for color in p.colores_rel %}
+                                <div class="active-color-chip" data-color-id="{{ color.id }}">
+                                    <input type="hidden" name="colores" value="{{ color.id }}">
+                                    <img src="{{ url_for('static', filename=color.imagen_ref) }}" class="color-thumbnail-circle">
+                                    <span>{{ color.nombre }}</span>
+                                    <button type="button" class="btn-remove-active-color" onclick="removeActiveColor(this, {{ color.id }}, 'edit-{{ p.id }}')">×</button>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="color-selector-wrapper">
+                                <button type="button" class="btn-show-colors-dropdown" onclick="toggleColorsDropdown(event, this)">
+                                    + Agregar Color
+                                </button>
+                                <div class="colors-dropdown-list" id="colors-dropdown-list-edit-{{ p.id }}">
+                                    {% for color in todos_los_colores %}
+                                    <div class="colors-dropdown-item {% if color in p.colores_rel %}selected{% endif %}" 
+                                         data-dropdown-color-id="{{ color.id }}"
+                                         onclick="addActiveColor({{ color.id }}, '{{ color.nombre }}', '{{ url_for('static', filename=color.imagen_ref) }}', {{ p.id }})">
+                                        {{ color.nombre }}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">Subir fotos extra:</label>
-                            <input type="file" name="extra_imgs" accept="image/*" multiple class="form-input">
+                            <input type="file" name="extra_imgs" accept="image/*" multiple class="form-input" style="padding: 8px 10px;">
                         </div>
 
-                        <div class="form-group edit-form-full" style="display: flex; align-items: center; gap: 15px; background: white; padding: 10px 12px; border-radius: 6px;">
-                            <input type="checkbox" name="destacado" id="destacado_edit_{{ p.id }}" {% if p.destacado %}checked{% endif %} style="width: 25px; height: 25px;">
-                            <label for="destacado_edit_{{ p.id }}" style="font-size: 0.9rem; font-weight: bold; color: var(--color-brown);">Mostrar en portada principal</label>
+                        <div class="form-group" style="display: flex; align-items: center; gap: 15px; background: white; padding: 10px 12px; border-radius: 6px; border: 1.5px solid var(--color-cream); height:fit-content; margin-top:22px;">
+                            <input type="checkbox" name="destacado" id="destacado_edit_{{ p.id }}" {% if p.destacado %}checked{% endif %} style="width: 18px; height: 18px; cursor:pointer;">
+                            <label for="destacado_edit_{{ p.id }}" style="font-size: 0.88rem; font-weight: 700; color: var(--color-brown); cursor:pointer; margin:0;">Mostrar en portada</label>
                         </div>
                     </div>
 
-                    <div style="display: flex; gap: 10px; margin-top: 14px;">
+                    <!-- FOTOS UNIFICADAS ORDENABLES (ARRAS TRABLES) -->
+                    <div style="margin-top: 20px; background: white; padding: 15px; border-radius: 8px; border: 1.5px solid var(--color-cream);">
+                        <h5 style="font-size: 0.95rem; font-weight: 700; color: var(--color-slate); margin: 0 0 5px 0;">Fotos guardadas de la prenda:</h5>
+                        <p style="font-size: 0.78rem; color: var(--color-taupe); margin: 0 0 12px 0;">Arrastrá las fotos para cambiar su orden. La <strong>primera foto</strong> de la lista será la foto principal en el catálogo.</p>
+                        <div class="sortable-images" data-product-id="{{ p.id }}" style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <!-- Foto Principal Actual -->
+                            <div class="sortable-img-item" data-img-type="main" data-img-filename="{{ p.img }}" style="position: relative; border: 2px solid var(--color-brown); padding: 4px; border-radius: 8px; cursor: grab; user-select: none; background: white;">
+                                <img src="{{ url_for('static', filename=p.img) }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px; pointer-events: none;">
+                                <div style="text-align:center; font-size: 0.62rem; color: var(--color-brown); margin-top: 3px; font-weight:700;">★ Principal</div>
+                            </div>
+                            
+                            <!-- Fotos Extras Actuales -->
+                            {% if p.imagenes_extra %}
+                                {% for img_extra in p.imagenes_extra %}
+                                    <div class="sortable-img-item" data-img-type="secondary" data-img-id="{{ img_extra.id }}" style="position: relative; border: 1.5px solid var(--color-cream); padding: 4px; border-radius: 8px; cursor: grab; user-select: none; background: white;">
+                                        <img src="{{ url_for('static', filename=img_extra.filename) }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px; pointer-events: none;">
+                                        <div style="text-align:center; font-size: 0.62rem; color: var(--color-taupe); margin-top: 3px; font-weight:600;">☰ arrastrar</div>
+                                        <button type="button" class="btn-delete-image" data-image-id="{{ img_extra.id }}" style="background: #d9534f; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 11px; font-weight: bold; cursor: pointer; position: absolute; top: -8px; right: -8px; display:flex; align-items:center; justify-content:center; box-shadow: 0 1px 4px rgba(0,0,0,0.15);">×</button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 15px; margin-top: 20px;">
                         <button type="button" class="btn-edit" style="background-color: #888; flex: 1;" onclick="toggleEditForm({{ p.id }})">CANCELAR EDICIÓN</button>
                         <button type="submit" class="admin-btn-primary" style="flex: 2;">GUARDAR CAMBIOS</button>
                     </div>
                 </form>
-                
-                {% if p.imagenes_extra %}
-                <div style="margin-top: 20px; background: white; padding: 14px; border-radius: 6px; border: 1px solid #ddd;">
-                    <h5 style="font-family: 'Montserrat', sans-serif; font-size: 0.95rem; color: var(--color-slate); margin-bottom: 5px;">Fotos adicionales guardadas:</h5>
-                    <p style="font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--color-taupe); margin-bottom: 10px;">Arrastrá las fotos para cambiar el orden en que aparecen.</p>
-                    <div class="sortable-images" data-product-id="{{ p.id }}" style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        {% for img_extra in p.imagenes_extra %}
-                            <div class="sortable-img-item" data-img-id="{{ img_extra.id }}" style="position: relative; border: 1px solid var(--color-cream); padding: 4px; border-radius: 6px; cursor: grab; user-select: none;">
-                                <img src="{{ url_for('static', filename=img_extra.filename) }}" style="width: 85px; height: 85px; object-fit: cover; border-radius: 4px; pointer-events: none;">
-                                <div style="text-align:center; font-size: 0.65rem; color: var(--color-taupe); margin-top: 3px; font-family: 'Montserrat', sans-serif;">☰ arrastrar</div>
-                                <button type="button" class="btn-delete-image" data-image-id="{{ img_extra.id }}" style="background: #d9534f; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 12px; font-weight: bold; cursor: pointer; position: absolute; top: -12px; right: -12px;">X</button>
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
             </div>
             {% endfor %}
         </div>
     </div>
 
-    <details class="admin-collapsible">
-        <summary>Añadir nueva prenda</summary>
-        <div class="admin-section admin-add-form">
-        <h3 class="admin-section-title">Añadir nueva prenda</h3>
-        <form action="{{ url_for('admin_add_producto') }}" method="POST" enctype="multipart/form-data">
-            
-            <div class="form-group">
-                <label class="form-label">Nombre de la prenda:</label>
-                <span class="form-help">Ejemplo: Sweater Coral, Ruana de Lana.</span>
-                <input type="text" name="nombre" class="form-input" required>
-            </div>
+    <!-- SECCIÓN DE FORMULARIOS DE CREACIÓN COLAPSABLES (ABAJO DEL INVENTARIO) -->
+    <div class="admin-forms-collapsibles">
+        
+        <!-- FORMULARIO 1: AÑADIR PRENDA -->
+        <details class="admin-collapsible" id="collapsible-add-product">
+            <summary>Añadir nueva prenda</summary>
+            <div class="admin-section">
+                <form id="form-add-product" action="{{ url_for('admin_add_producto') }}" method="POST" enctype="multipart/form-data">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Nombre de la prenda:</label>
+                        <input type="text" name="nombre" class="form-input" required placeholder="Ej: Sweater Coral melange">
+                    </div>
 
-            <div class="form-group">
-                <label class="form-label">¿A qué categoría pertenece?</label>
-                <select name="categoria_id" class="form-input" required>
-                    {% for cat in todas_las_categorias %}
-                        <option value="{{ cat.id }}">{{ cat.nombre }}</option>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label class="form-label">¿A qué categoría pertenece?</label>
+                            <select name="categoria_id" class="form-input" required>
+                                {% for cat in todas_las_categorias %}
+                                    <option value="{{ cat.id }}">{{ cat.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Precio ($):</label>
+                            <input type="text" name="precio" class="form-input price-formatter-input" required placeholder="Ej: 180.000">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Unidades disponibles:</label>
+                        <input type="number" name="stock" class="form-input" required value="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Descripción breve:</label>
+                        <textarea name="desc" class="form-input" rows="2" required placeholder="Ej: Corte holgado ideal para media estación."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Medidas de la prenda:</label>
+                        <textarea name="materiales" class="form-input" rows="2" placeholder="Ej: Ancho 52 cm, largo 60 cm."></textarea>
+                    </div>
+
+                    <!-- SELECCIÓN DE COLORES PREMIUM -->
+                    <div class="form-group">
+                        <label class="form-label">Colores disponibles:</label>
+                        <div class="active-colors-container" id="active-colors-container-add">
+                            <!-- Aquí se inyectan los colores seleccionados -->
+                        </div>
+                        <div class="color-selector-wrapper">
+                            <button type="button" class="btn-show-colors-dropdown" onclick="toggleColorsDropdown(event, this)">
+                                + Agregar Color
+                            </button>
+                            <div class="colors-dropdown-list" id="colors-dropdown-list-add">
+                                {% for color in todos_los_colores %}
+                                <div class="colors-dropdown-item" 
+                                     data-dropdown-color-id="{{ color.id }}"
+                                     onclick="addActiveColor({{ color.id }}, '{{ color.nombre }}', '{{ url_for('static', filename=color.imagen_ref) }}')">
+                                    {{ color.nombre }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label class="form-label">Foto principal:</label>
+                            <input type="file" name="img" accept="image/*" class="form-input" required style="padding: 7px 10px;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Fotos extra (Opcional):</label>
+                            <input type="file" name="extra_imgs" accept="image/*" multiple class="form-input" style="padding: 7px 10px;">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="admin-btn-primary" style="margin-top: 10px;">GUARDAR NUEVA PRENDA</button>
+                </form>
+            </div>
+        </details>
+
+        <!-- FORMULARIO 2: CREAR CATEGORÍA -->
+        <details class="admin-collapsible" id="collapsible-add-category" style="max-width: 500px;">
+            <summary>Crear nueva categoría</summary>
+            <div class="admin-section">
+                <form id="form-add-categoria" action="{{ url_for('admin_add_categoria') }}" method="POST">
+                    <div class="form-group">
+                        <label class="form-label">Nombre de la categoría:</label>
+                        <input type="text" name="nombre_categoria" class="form-input" required placeholder="Ej: Sweaters, Accesorios">
+                    </div>
+                    <button type="submit" class="admin-btn-primary">GUARDAR CATEGORÍA</button>
+                </form>
+            </div>
+        </details>
+
+        <!-- FORMULARIO 3: CREAR COLOR -->
+        <details class="admin-collapsible" id="collapsible-add-color" style="max-width: 500px;">
+            <summary>Crear nuevo color</summary>
+            <div class="admin-section">
+                <form id="form-add-color" action="{{ url_for('admin_add_color') }}" method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label class="form-label">Nombre del color:</label>
+                        <input type="text" name="nombre_color" class="form-input" required placeholder="Ej: Verde Militar, Camel">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Foto de referencia (Ovillo/Lana):</label>
+                        <input type="file" name="img_color" accept="image/*" class="form-input" required style="padding: 7px 10px;">
+                    </div>
+                    <button type="submit" class="admin-btn-primary">GUARDAR COLOR</button>
+                </form>
+
+                <!-- LISTADO Y GESTIÓN DE COLORES CREADOS -->
+                <div class="admin-colors-list" id="admin-colors-list-grid">
+                    {% for color in todos_los_colores %}
+                    <div class="admin-color-item" id="admin-color-item-{{ color.id }}">
+                        <div class="admin-color-item-info">
+                            <img src="{{ url_for('static', filename=color.imagen_ref) }}" class="admin-color-thumb">
+                            <span class="admin-color-name">{{ color.nombre }}</span>
+                        </div>
+                        <button type="button" class="btn-delete-color" data-color-id="{{ color.id }}" data-color-name="{{ color.nombre }}">✕</button>
+                    </div>
                     {% endfor %}
-                </select>
+                </div>
             </div>
+        </details>
 
-            <div class="form-group">
-                <label class="form-label">Precio ($):</label>
-                <span class="form-help">Solo escribe los números, sin puntos ni comas.</span>
-                <input type="number" name="precio" class="form-input" required>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">¿Cuántas unidades hay disponibles?</label>
-                <input type="number" name="stock" class="form-input" required value="1">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Descripción breve:</label>
-                <span class="form-help">Frase corta que aparece en el catálogo. Ej: "Corte holgado ideal para media estación."</span>
-                <textarea name="desc" class="form-input" rows="3" required></textarea>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Medidas de la prenda:</label>
-                <span class="form-help">Detallá medidas y referencia de talle. Ej: "Ancho 52 cm, largo 60 cm, manga 58 cm."</span>
-                <textarea name="materiales" class="form-input" rows="3"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Colores disponibles (Opcional):</label>
-                <span class="form-help">Escribe los colores separados por coma. Ejemplo: Rojo, Azul, Verde. (Déjalo vacío si es color único).</span>
-                <input type="text" name="colores" class="form-input">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Foto principal de la prenda:</label>
-                <span class="form-help">Esta será la foto que todos verán en el catálogo.</span>
-                <input type="file" name="img" accept="image/*" class="form-input" required>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Fotos extra de la prenda (Opcional):</label>
-                <span class="form-help">Podés subir varias imágenes a la vez para los detalles del producto.</span>
-                <input type="file" name="extra_imgs" accept="image/*" multiple class="form-input">
-            </div>
-
-            <button type="submit" class="admin-btn-primary" style="margin-top: 20px;">GUARDAR NUEVA PRENDA</button>
-        </form>
-        </div>
-    </details>
-
-    <details class="admin-collapsible">
-        <summary>Crear nueva categoría</summary>
-        <div class="admin-section admin-category-form">
-        <h3 class="admin-section-title">Crear nueva categoría</h3>
-        <form action="{{ url_for('admin_add_categoria') }}" method="POST">
-            <div class="form-group">
-                <label class="form-label">Nombre de la categoría:</label>
-                <input type="text" name="nombre_categoria" class="form-input" required>
-            </div>
-            <button type="submit" class="admin-btn-primary">GUARDAR CATEGORÍA</button>
-        </form>
-        </div>
-    </details>
-
-    <!-- Las tarjetas y formularios de edición se mantienen arriba -->
+    </div>
 
 </div>
 
 <script>
+// Formateador de precios en vivo y cierre de dropdowns (Eventos locales para evitar duplicación en SPA)
+const adminContainer = document.querySelector('.admin-container');
+if (adminContainer) {
+    adminContainer.addEventListener('input', function(e) {
+        if (e.target.classList.contains('price-formatter-input')) {
+            let value = e.target.value.replace(/\D/g, ''); // Solo dígitos
+            if (value === '') {
+                e.target.value = '';
+                return;
+            }
+            // Eliminar ceros a la izquierda y formatear con puntos como separadores de miles
+            let cleanValue = Number(value).toString();
+            e.target.value = cleanValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+    });
+
+    adminContainer.addEventListener('click', function(e) {
+        if (!e.target.closest('.color-selector-wrapper')) {
+            adminContainer.querySelectorAll('.colors-dropdown-list').forEach(el => el.style.display = 'none');
+        }
+    });
+}
+
+// Mostrar/Ocultar dropdown de colores
+function toggleColorsDropdown(event, button) {
+    event.stopPropagation();
+    // Cerrar otros dropdowns abiertos
+    document.querySelectorAll('.colors-dropdown-list').forEach(el => {
+        if (el !== button.nextElementSibling) {
+            el.style.display = 'none';
+        }
+    });
+    const dropdown = button.nextElementSibling;
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+}
+
+// Agregar color activo
+function addActiveColor(colorId, colorName, colorImgUrl, productId = null) {
+    const prefix = productId ? `edit-${productId}` : 'add';
+    const container = document.getElementById(`active-colors-container-${prefix}`);
+    const dropdown = document.getElementById(`colors-dropdown-list-${prefix}`);
+    
+    // Verificar si ya está agregado
+    if (container.querySelector(`[data-color-id="${colorId}"]`)) {
+        dropdown.style.display = 'none';
+        return;
+    }
+    
+    // Crear el chip
+    const chip = document.createElement('div');
+    chip.className = 'active-color-chip';
+    chip.dataset.colorId = colorId;
+    chip.innerHTML = `
+        <input type="hidden" name="colores" value="${colorId}">
+        <img src="${colorImgUrl}" class="color-thumbnail-circle">
+        <span>${colorName}</span>
+        <button type="button" class="btn-remove-active-color" onclick="removeActiveColor(this, ${colorId}, '${prefix}')">×</button>
+    `;
+    
+    container.appendChild(chip);
+    
+    // Marcar item en dropdown como seleccionado
+    const item = dropdown.querySelector(`[data-dropdown-color-id="${colorId}"]`);
+    if (item) {
+        item.classList.add('selected');
+    }
+    
+    dropdown.style.display = 'none';
+}
+
+// Remover color activo
+function removeActiveColor(button, colorId, prefix) {
+    const chip = button.closest('.active-color-chip');
+    if (chip) {
+        chip.remove();
+    }
+    
+    // Desmarcar item en dropdown
+    const dropdown = document.getElementById(`colors-dropdown-list-${prefix}`);
+    if (dropdown) {
+        const item = dropdown.querySelector(`[data-dropdown-color-id="${colorId}"]`);
+        if (item) {
+            item.classList.remove('selected');
+        }
+    }
+}
+
+// Toggle de edición del formulario
 function toggleEditForm(id) {
     const formContainer = document.getElementById('edit-form-' + id);
+    if (!formContainer) return;
     if (formContainer.style.display === 'block') {
         formContainer.style.display = 'none';
     } else {
-        // Ocultar todos los otros formularios primero
+        // Ocultar todos los otros formularios
         document.querySelectorAll('.edit-form-container').forEach(el => el.style.display = 'none');
-        // Mostrar este
         formContainer.style.display = 'block';
-        // Hacer scroll suave hacia el formulario
         formContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 }
 
-// Drag-and-drop para reordenar imágenes secundarias
-document.addEventListener('DOMContentLoaded', function() {
+// Alternar entre Vista de Lista y Tarjetas
+function changeInventoryView(viewType) {
+    const container = document.getElementById('inventory-container');
+    const btnGrid = document.getElementById('btn-view-cards');
+    const btnList = document.getElementById('btn-view-list');
+    
+    if (viewType === 'list') {
+        container.classList.add('list-view');
+        btnList.classList.add('active');
+        btnGrid.classList.remove('active');
+        localStorage.setItem('admin-inventory-view', 'list');
+    } else {
+        container.classList.remove('list-view');
+        btnGrid.classList.add('active');
+        btnList.classList.remove('active');
+        localStorage.setItem('admin-inventory-view', 'grid');
+    }
+}
+
+// AJAX: Recargar la sección de Inventario y Formularios sin refrescar la página
+function refreshInventory() {
+    fetch(window.location.href)
+    .then(response => response.text())
+    .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // 1. Recargar el contenedor de productos y formularios
+        const newInventory = doc.querySelector('#inventory-container');
+        const oldInventory = document.querySelector('#inventory-container');
+        if (newInventory && oldInventory) {
+            oldInventory.innerHTML = newInventory.innerHTML;
+        }
+
+        // 2. Recargar el menú de colores disponibles de la prenda a añadir
+        const newColorsDropdown = doc.querySelector('#colors-dropdown-list-add');
+        const oldColorsDropdown = document.querySelector('#colors-dropdown-list-add');
+        if (newColorsDropdown && oldColorsDropdown) {
+            oldColorsDropdown.innerHTML = newColorsDropdown.innerHTML;
+        }
+
+        const newColorsManagement = doc.querySelector('#admin-colors-list-grid');
+        const oldColorsManagement = document.querySelector('#admin-colors-list-grid');
+        if (newColorsManagement && oldColorsManagement) {
+            oldColorsManagement.innerHTML = newColorsManagement.innerHTML;
+        }
+
+        // 3. Recargar el desplegable de categorías del formulario de añadir
+        const newCatSelect = doc.querySelector('#form-add-product select[name="categoria_id"]');
+        const oldCatSelect = document.querySelector('#form-add-product select[name="categoria_id"]');
+        if (newCatSelect && oldCatSelect) {
+            oldCatSelect.innerHTML = newCatSelect.innerHTML;
+        }
+
+        // Re-inicializar filtros, drag-and-drop y peticiones AJAX de las tarjetas
+        applyInventoryFilters();
+        initializeSortableImages();
+        initializeInventoryActions();
+        initializeDeleteColorActions();
+        
+        // Restaurar la vista (Lista vs Tarjeta) guardada en localStorage
+        const savedView = localStorage.getItem('admin-inventory-view') || 'grid';
+        changeInventoryView(savedView);
+    })
+    .catch(error => console.error('Error al recargar inventario:', error));
+}
+
+// Búsqueda y Filtros de Inventario
+function applyInventoryFilters() {
+    const searchInput = document.getElementById('inventory-search');
+    const searchTerm = (searchInput?.value || '').trim().toUpperCase();
+    const cards = document.querySelectorAll('.admin-card');
+    
+    cards.forEach((card) => {
+        const name = (card.dataset.productName || '').trim();
+        const matchSearch = !searchTerm || name.includes(searchTerm);
+        
+        // Ocultar o mostrar la tarjeta/fila
+        card.style.display = matchSearch ? '' : 'none';
+        
+        // Ocultar también el formulario de edición asociado si la tarjeta se oculta
+        const id = card.id.replace('product-', '');
+        const editForm = document.getElementById('edit-form-' + id);
+        if (editForm && (card.style.display === 'none')) {
+            editForm.style.display = 'none';
+        }
+    });
+}
+
+function initializeSortableImages() {
+    // Drag-and-drop para reordenar imágenes unificadas
     document.querySelectorAll('.sortable-images').forEach(function(container) {
         let draggingEl = null;
 
@@ -570,14 +1103,31 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!draggingEl) return;
             draggingEl.style.opacity = '1';
             draggingEl = null;
-            // Guardar nuevo orden
+            
+            // Guardar nuevo orden mediante AJAX (unificado)
             const productId = container.dataset.productId;
-            const ids = Array.from(container.querySelectorAll('.sortable-img-item')).map(el => el.dataset.imgId);
+            const items = Array.from(container.querySelectorAll('.sortable-img-item')).map(el => {
+                return {
+                    type: el.dataset.imgType,
+                    id: el.dataset.imgId || null,
+                    filename: el.dataset.imgFilename || null
+                };
+            });
+            
             fetch('/admin/reorder_images/' + productId, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ order: ids })
-            });
+                body: JSON.stringify({ order: items })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok) {
+                    // Refrescar inventario para mostrar la nueva foto de portada
+                    refreshInventory();
+                    showNotification('Orden de fotos e imagen principal actualizados.');
+                }
+            })
+            .catch(err => console.error('Error al guardar orden:', err));
         });
 
         container.addEventListener('dragover', function(e) {
@@ -591,7 +1141,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Hacer los items draggables
         container.querySelectorAll('.sortable-img-item').forEach(item => {
             item.setAttribute('draggable', 'true');
         });
@@ -609,41 +1158,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
+}
 
-    const letterButtons = document.querySelectorAll('.letter-filter-btn');
-    const inventoryCards = document.querySelectorAll('.admin-card');
-    const searchInput = document.getElementById('inventory-search');
-    let selectedLetter = 'TODAS';
-
-    function applyInventoryFilters() {
-        const searchTerm = (searchInput?.value || '').trim().toUpperCase();
-        inventoryCards.forEach((card) => {
-            const name = (card.dataset.productName || '').trim();
-            const firstLetter = name.charAt(0);
-            const matchLetter = selectedLetter === 'TODAS' || firstLetter === selectedLetter;
-            const matchSearch = !searchTerm || name.includes(searchTerm);
-            card.style.display = (matchLetter && matchSearch) ? 'flex' : 'none';
-        });
-        document.querySelectorAll('.edit-form-container').forEach((form) => {
-            form.style.display = 'none';
-        });
-    }
-
-    letterButtons.forEach((btn) => {
-        btn.addEventListener('click', function() {
-            letterButtons.forEach((b) => b.classList.remove('active'));
-            this.classList.add('active');
-            selectedLetter = this.dataset.letter;
-            applyInventoryFilters();
-        });
-    });
-
-    if (searchInput) {
-        searchInput.addEventListener('input', applyInventoryFilters);
-    }
-
-    // AJAX para ocultar/mostrar productos
-    document.querySelectorAll('.btn-toggle').forEach(btn => {
+// Configurar acciones interactivas para tarjetas del inventario (Ocultar, Borrar, Editar, Borrar Imagen Extra)
+function initializeInventoryActions() {
+    // AJAX: Mostrar/Ocultar Producto
+    document.querySelectorAll('#inventory-container .btn-toggle').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             const form = this.closest('form');
@@ -660,23 +1180,20 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Actualizar el badge de oculto
-                    const badge = productCard.querySelector('.product-hidden-badge');
+                    const title = productCard.querySelector('.admin-card-title');
+                    const badge = title.querySelector('.product-hidden-badge');
                     if (data.oculto) {
                         if (!badge) {
                             const newBadge = document.createElement('span');
                             newBadge.className = 'product-hidden-badge';
+                            newBadge.style.cssText = 'margin-left: 10px; margin-bottom: 0;';
                             newBadge.textContent = '⚠ OCULTO';
-                            productCard.querySelector('.admin-card-title').insertAdjacentElement('afterend', newBadge);
+                            title.appendChild(newBadge);
                         }
                     } else {
                         if (badge) badge.remove();
                     }
-                    
-                    // Actualizar el texto del botón
-                    this.textContent = data.oculto ? 'MOSTRAR PRODUCTO' : 'OCULTAR PRODUCTO';
-                    
-                    // Mostrar notificación
+                    this.textContent = data.oculto ? 'MOSTRAR' : 'OCULTAR';
                     showNotification(data.message);
                 }
             })
@@ -684,18 +1201,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // AJAX para borrar productos
-    document.querySelectorAll('.btn-delete').forEach(btn => {
+    // AJAX: Borrar Producto
+    document.querySelectorAll('#inventory-container .btn-delete').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
+            const productCard = this.closest('.admin-card');
+            const productName = productCard.querySelector('.product-name-span').textContent;
             
-            const productName = this.closest('.admin-card-actions').closest('.admin-card-body').querySelector('.admin-card-title').textContent;
-            const confirmed = confirm(`¿Estás segura de que quieres borrar la prenda: ${productName}? Esta acción no se puede deshacer.`);
-            
+            const confirmed = confirm(`¿Estás segura de que quieres borrar la prenda: "${productName}"? Esta acción no se puede deshacer.`);
             if (!confirmed) return;
             
-            const form = this.closest('form');
-            const productCard = form.closest('.admin-card');
             const productId = productCard.id.replace('product-', '');
             
             fetch(`/admin/delete/${productId}`, {
@@ -708,9 +1223,13 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Animar la desaparición de la tarjeta
-                    productCard.style.transition = 'opacity 0.3s ease-out';
+                    productCard.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
                     productCard.style.opacity = '0';
+                    productCard.style.transform = 'scale(0.95)';
+                    
+                    const editForm = document.getElementById('edit-form-' + productId);
+                    if (editForm) editForm.remove();
+                    
                     setTimeout(() => {
                         productCard.remove();
                         showNotification(data.message);
@@ -721,9 +1240,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // AJAX para borrar imágenes secundarias
+    // AJAX: Borrar Imagen Secundaria
     document.querySelectorAll('.btn-delete-image').forEach(btn => {
-        btn.addEventListener('click', function(e) {
+        btn.onclick = function(e) {
             e.preventDefault();
             const confirmed = confirm('¿Borrar esta foto definitivamente?');
             if (!confirmed) return;
@@ -751,60 +1270,288 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => console.error('Error:', error));
-        });
+        };
     });
 
-    // Función para mostrar notificaciones
-    function showNotification(message) {
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: #d4edda;
-            border: 2px solid #c3e6cb;
-            color: #155724;
-            padding: 15px 20px;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: bold;
-            z-index: 9999;
-            animation: slideIn 0.3s ease-out;
-        `;
-        notification.textContent = message;
-        document.body.appendChild(notification);
+    // AJAX: Envío de Formularios de Edición de Producto
+    document.querySelectorAll('[id^="form-edit-product-"]').forEach(form => {
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'GUARDANDO...';
+            
+            const formData = new FormData(form);
+            
+            fetch(form.action, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message);
+                    refreshInventory();
+                } else {
+                    showNotification(data.message || 'Error al guardar cambios.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error al procesar la solicitud.', 'error');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            });
+        };
+    });
+}
+
+// AJAX: Eliminar colores desde la lista lateral
+function initializeDeleteColorActions() {
+    document.querySelectorAll('.btn-delete-color').forEach(btn => {
+        btn.onclick = function() {
+            const colorId = this.dataset.colorId;
+            const colorName = this.dataset.colorName;
+            
+            const confirmed = confirm(`¿Borrar el color "${colorName}" definitivamente? Los productos asociados perderán este color.`);
+            if (!confirmed) return;
+            
+            fetch(`/admin/delete_color/${colorId}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const item = document.getElementById(`admin-color-item-${colorId}`);
+                    if (item) item.remove();
+                    showNotification(data.message);
+                    refreshInventory(); // Recargar los checkboxes en los formularios
+                }
+            })
+            .catch(error => console.error('Error al borrar color:', error));
+        };
+    });
+}
+
+// AJAX: Envío de formulario para Añadir Prenda
+function setupAddProductAjax() {
+    const form = document.getElementById('form-add-product');
+    if (!form) return;
+    form.onsubmit = function(e) {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'GUARDANDO PRENDA...';
         
-        setTimeout(() => {
-            notification.style.animation = 'slideOut 0.3s ease-out';
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
+        const formData = new FormData(form);
+        
+        fetch(form.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message);
+                form.reset();
+                refreshInventory();
+                
+                // Cerrar colapsable
+                const details = document.getElementById('collapsible-add-product');
+                if (details) details.removeAttribute('open');
+            } else {
+                showNotification(data.message || 'Error al guardar la prenda.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error en la conexión con el servidor.', 'error');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+    };
+}
+
+// AJAX: Envío de formulario para Añadir Categoría
+function setupAddCategoryAjax() {
+    const form = document.getElementById('form-add-categoria');
+    if (!form) return;
+    form.onsubmit = function(e) {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'CREANDO...';
+        
+        const formData = new FormData(form);
+        
+        fetch(form.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw err; });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message);
+                form.reset();
+                refreshInventory();
+                
+                // Cerrar colapsable
+                const details = document.getElementById('collapsible-add-category');
+                if (details) details.removeAttribute('open');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification(error.message || 'Error al crear la categoría.', 'error');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+    };
+}
+
+// AJAX: Envío de formulario para Añadir Color
+function setupAddColorAjax() {
+    const form = document.getElementById('form-add-color');
+    if (!form) return;
+    form.onsubmit = function(e) {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'CREANDO...';
+        
+        const formData = new FormData(form);
+        
+        fetch(form.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw err; });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message);
+                form.reset();
+                refreshInventory();
+                
+                // Cerrar colapsable
+                const details = document.getElementById('collapsible-add-color');
+                if (details) details.removeAttribute('open');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification(error.message || 'Error al crear el color.', 'error');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+    };
+}
+
+// Función global de Notificación Tipo Toast
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    const isError = type === 'error';
+    notification.style.cssText = `
+        position: fixed;
+        top: 25px;
+        right: 25px;
+        background-color: ${isError ? '#f2dede' : '#d4edda'};
+        border: 2px solid ${isError ? '#ebccd1' : '#c3e6cb'};
+        color: ${isError ? '#a94442' : '#155724'};
+        padding: 15px 24px;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        z-index: 99999;
+        animation: slideIn 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s cubic-bezier(0.165, 0.84, 0.44, 1)';
+        setTimeout(() => notification.remove(), 300);
+    }, 3500);
+}
+
+// Inicialización completa en carga de página (se ejecuta de inmediato)
+(function() {
+    // Configurar Vista de Inventario Inicial desde localStorage
+    const savedView = localStorage.getItem('admin-inventory-view') || 'grid';
+    changeInventoryView(savedView);
+
+    // Inicializar buscador de inventario
+    const searchInput = document.getElementById('inventory-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', applyInventoryFilters);
     }
 
-    // Agregar animaciones CSS
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
+    // Inicializar todas las llamadas AJAX y Sortables
+    initializeSortableImages();
+    initializeInventoryActions();
+    initializeDeleteColorActions();
+    setupAddProductAjax();
+    setupAddCategoryAjax();
+    setupAddColorAjax();
+
+    // Agregar Animaciones CSS dinámicamente al HTML si no existen
+    if (!document.getElementById('admin-toast-styles')) {
+        const style = document.createElement('style');
+        style.id = 'admin-toast-styles';
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(120%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
             }
-            to {
-                transform: translateX(0);
-                opacity: 1;
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(120%);
+                    opacity: 0;
+                }
             }
-        }
-        @keyframes slideOut {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-        }
-    `;
-    document.head.appendChild(style);
-});
+        `;
+        document.head.appendChild(style);
+    }
+})();
 </script>
 {% endblock %}

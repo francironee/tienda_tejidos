@@ -112,7 +112,10 @@
 </section>
 
 <script>
-    function updateCart(key, action, index) {
+(function() {
+    let tipoEnvioSeleccionado = 'retiro';
+
+    window.updateCart = function(key, action, index) {
         fetch('/update_cart/' + encodeURIComponent(key) + '/' + action, {
             method: 'POST',
             headers: {
@@ -142,39 +145,33 @@
             }
         })
         .catch(err => console.error(err));
-    }
+    };
 
-    let tipoEnvioSeleccionado = 'retiro';
-
-    function seleccionarEnvio(tipo) {
+    window.seleccionarEnvio = function(tipo) {
         const mensajeEnvio = document.getElementById('mensaje-envio-info');
         tipoEnvioSeleccionado = tipo;
         
         if (tipo === 'envio') {
             mensajeEnvio.style.display = 'block';
-            // Guardar en sesión
             fetch('/guardar_envio', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ tipo: 'envio', costo: 0, zona: 'A coordinar', cp: '' })
             });
         } else {
-            // Retiro en showroom - gratis
             mensajeEnvio.style.display = 'none';
-            // Guardar en sesión
             fetch('/guardar_envio', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ tipo: 'retiro', costo: 0, zona: 'Retiro showroom', cp: '' })
             });
         }
-    }
+    };
 
-    function abrirModalDatos() {
+    window.abrirModalDatos = function() {
         const direccionContainer = document.getElementById('campo-direccion-container');
         const direccionInput = document.getElementById('campo-direccion');
         
-        // Mostrar campo de dirección solo si eligió envío
         if (tipoEnvioSeleccionado === 'envio') {
             direccionContainer.style.display = 'block';
             direccionInput.required = true;
@@ -186,27 +183,25 @@
         
         document.getElementById('modal-datos').style.display = 'flex';
         document.body.style.overflow = 'hidden';
-    }
+    };
 
-    function cerrarModalDatos() {
+    window.cerrarModalDatos = function() {
         document.getElementById('modal-datos').style.display = 'none';
         document.body.style.overflow = 'auto';
-    }
+    };
 
-    function confirmarYPagar() {
+    window.confirmarYPagar = function() {
         const nombre = document.getElementById('campo-nombre').value.trim();
         const celular = document.getElementById('campo-celular').value.trim();
         const email = document.getElementById('campo-email').value.trim();
         const direccion = document.getElementById('campo-direccion').value.trim();
 
-        // Validar campos básicos
         if (!nombre || !celular || !email) {
             document.getElementById('modal-error').innerText = 'Por favor completá todos los campos.';
             document.getElementById('modal-error').style.display = 'block';
             return;
         }
 
-        // Validar dirección si eligió envío
         if (tipoEnvioSeleccionado === 'envio' && !direccion) {
             document.getElementById('modal-error').innerText = 'Por favor ingresá tu dirección de envío.';
             document.getElementById('modal-error').style.display = 'block';
@@ -229,13 +224,14 @@
                 document.getElementById('checkout-form').submit();
             }
         });
-    }
+    };
+})();
 </script>
 
 <!-- Modal de datos del cliente -->
 <div id="modal-datos" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center; padding:20px;">
     <div style="background:#fff; border-radius:8px; padding:40px; max-width:480px; width:100%; font-family:'Montserrat',sans-serif; position:relative;">
-        <button onclick="cerrarModalDatos()" style="position:absolute; top:6px; right:8px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--color-taupe); line-height:1;">×</button>
+        <button onclick="cerrarModalDatos()" style="position:absolute; top:16px; right:16px; background:none; border:none; font-size:1.8rem; cursor:pointer; color:var(--color-taupe); line-height:1; width:32px; height:32px; padding:0; margin:0; display:flex; align-items:center; justify-content:center; z-index:10;" aria-label="Cerrar modal">×</button>
         <h3 style="font-family:'Playfair Display',serif; color:var(--color-brown); font-size:1.6rem; margin-bottom:8px;">Antes de continuar</h3>
         <p style="font-size:0.85rem; color:var(--color-taupe); margin-bottom:28px; letter-spacing:0.5px;">Necesitamos tus datos.</p>
 

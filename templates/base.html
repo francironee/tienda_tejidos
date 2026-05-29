@@ -14,8 +14,20 @@
     </script>
 
     <title>{% block title %}Tejidos Margot | Tienda Oficial{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}Tejidos premium hechos a mano con diseños exclusivos y amigables con la piel. Comprá online prendas únicas de primera calidad en Tejidos Margot.{% endblock %}">
+
+    <!-- Etiquetas Open Graph para compartir (WhatsApp, Instagram, etc.) -->
+    <meta property="og:title" content="{% block og_title %}Tejidos Margot | Tienda Oficial{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Tejidos premium hechos a mano con diseños exclusivos y amigables con la piel. Comprá online prendas únicas de primera calidad en Tejidos Margot.{% endblock %}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url_root.rstrip('/') }}{% block og_path %}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ request.url_root }}static/logo2.png{% endblock %}">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ request.url_root.rstrip('/') }}{% block canonical_path %}{% endblock %}">
+
     <!-- Favicon Actualizado -->
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="icon" type="image/jpg" href="{{ url_for('static', filename='favicon.jpg') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,8 +36,24 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Progress Bar Premium SPA */
+        #spa-progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background-color: var(--color-brown);
+            z-index: 100000;
+            transition: width 0.4s ease, opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
 </head>
 <body>
+    <div id="spa-progress-bar"></div>
     <header id="main-header">
         <div class="header-left">
             <button class="hamburger-btn" id="hamburger-btn" aria-label="Abrir menú">
@@ -131,30 +159,104 @@
             element.classList.toggle('active');
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
-            // Hamburger menu
-            const hamburgerBtn = document.getElementById('hamburger-btn');
-            const mobileNav = document.getElementById('mobile-nav');
-            if (hamburgerBtn && mobileNav) {
-                hamburgerBtn.addEventListener('click', function () {
-                    this.classList.toggle('open');
-                    mobileNav.classList.toggle('mobile-open');
-                });
-                mobileNav.querySelectorAll('a').forEach(function (link) {
-                    link.addEventListener('click', function () {
-                        hamburgerBtn.classList.remove('open');
-                        mobileNav.classList.remove('mobile-open');
-                    });
-                });
-                // Cerrar si se toca fuera del header
-                document.addEventListener('click', function (e) {
-                    if (!e.target.closest('header')) {
-                        hamburgerBtn.classList.remove('open');
-                        mobileNav.classList.remove('mobile-open');
-                    }
-                });
-            }
+        // --- SPA ENGINE - ZERO RELOADS ---
+        let progressInterval;
+        function showProgressBar() {
+            const bar = document.getElementById('spa-progress-bar');
+            if (!bar) return;
+            bar.style.opacity = '1';
+            bar.style.width = '0%';
+            
+            clearInterval(progressInterval);
+            let progress = 0;
+            progressInterval = setInterval(() => {
+                progress += (95 - progress) * 0.1;
+                bar.style.width = progress + '%';
+            }, 100);
+        }
 
+        function hideProgressBar() {
+            const bar = document.getElementById('spa-progress-bar');
+            if (!bar) return;
+            clearInterval(progressInterval);
+            bar.style.width = '100%';
+            setTimeout(() => {
+                bar.style.opacity = '0';
+                setTimeout(() => {
+                    bar.style.width = '0%';
+                }, 300);
+            }, 200);
+        }
+
+        function loadPageSPA(url, pushToHistory = true) {
+            showProgressBar();
+            
+            const urlObj = new URL(url, window.location.origin);
+            const hash = urlObj.hash;
+            
+            fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error('Network response error');
+                return response.text();
+            })
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Swap Title
+                document.title = doc.title;
+                
+                // Swap Content
+                const newMain = doc.querySelector('main');
+                const oldMain = document.querySelector('main');
+                if (newMain && oldMain) {
+                    oldMain.innerHTML = newMain.innerHTML;
+                    
+                    // Extraer y ejecutar scripts dinámicamente en el documento activo
+                    const scripts = newMain.querySelectorAll('script');
+                    scripts.forEach(script => {
+                        const newScript = document.createElement('script');
+                        Array.from(script.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                        newScript.textContent = script.textContent;
+                        document.body.appendChild(newScript);
+                        // Limpiar para no duplicar tags en el DOM activo
+                        newScript.remove();
+                    });
+                }
+                
+                // History Push
+                if (pushToHistory) {
+                    history.pushState({ url: url }, doc.title, url);
+                }
+                
+                // Re-inicializar componentes globales
+                reinitializeSPAComponents();
+
+                // Reset scroll or scroll to hash
+                if (hash) {
+                    setTimeout(() => {
+                        const targetElement = document.querySelector(hash);
+                        if (targetElement) {
+                            lenis.scrollTo(targetElement, { duration: 1.2, offset: -90 });
+                        } else {
+                            window.scrollTo({ top: 0, behavior: 'instant' });
+                        }
+                    }, 350);
+                } else {
+                    window.scrollTo({ top: 0, behavior: 'instant' });
+                }
+            })
+            .catch(err => {
+                console.error('SPA navigation failed, falling back to full reload:', err);
+                window.location.href = url;
+            })
+            .finally(() => {
+                hideProgressBar();
+            });
+        }
+
+        function reinitializeSPAComponents() {
+            // 1. Re-initialize IntersectionObserver for .fade-up
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
@@ -166,6 +268,97 @@
 
             const hiddenElements = document.querySelectorAll('.fade-up');
             hiddenElements.forEach((el) => observer.observe(el));
+
+            // 2. Re-initialize Carousel if exists
+            if(document.querySelector(".carousel-slide")) {
+                slideIndex = 1;
+                showSlides(slideIndex);
+                startCarousel();
+            }
+        }
+
+        // Intercept all link clicks via Event Delegation
+        document.body.addEventListener('click', function(e) {
+            const anchor = e.target.closest('a');
+            if (!anchor) return;
+            
+            // Ignorar enlaces externos, descargas, o target _blank
+            if (anchor.target === '_blank' || anchor.hasAttribute('download')) return;
+            
+            const href = anchor.getAttribute('href');
+            if (!href) return;
+            
+            // Ignorar rutas especiales de pasarelas de pago, logout, estáticos o detalles de productos
+            if (href.includes('/checkout') || href.includes('mercadopago') || href.includes('logout') || href.startsWith('/static/') || href.includes('/producto/')) {
+                return;
+            }
+            
+            // Validar origen
+            const url = new URL(anchor.href, window.location.origin);
+            if (url.origin !== window.location.origin) return;
+            
+            // Cerrar menú hamburguesa si está abierto
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            const mobileNav = document.getElementById('mobile-nav');
+            const closeHamburger = () => {
+                if (hamburgerBtn && mobileNav) {
+                    hamburgerBtn.classList.remove('open');
+                    mobileNav.classList.remove('mobile-open');
+                }
+            };
+            
+            // Enlaces con hash (anclas locales)
+            if (url.hash) {
+                const targetPath = url.pathname;
+                const currentPath = window.location.pathname;
+                if (targetPath === currentPath) {
+                    e.preventDefault();
+                    closeHamburger();
+                    
+                    const targetElement = document.querySelector(url.hash);
+                    if (targetElement) {
+                        lenis.scrollTo(targetElement, { duration: 1.2, offset: -90 });
+                    }
+                    history.pushState({ url: anchor.href }, document.title, anchor.href);
+                    return;
+                }
+            }
+            
+            e.preventDefault();
+            closeHamburger();
+            
+            loadPageSPA(anchor.href);
+        });
+
+        // Manejar botones de atrás/adelante del navegador sin recargas
+        window.addEventListener('popstate', function(event) {
+            if (event.state && event.state.url) {
+                loadPageSPA(event.state.url, false);
+            } else {
+                loadPageSPA(window.location.href, false);
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // Hamburger menu
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            const mobileNav = document.getElementById('mobile-nav');
+            if (hamburgerBtn && mobileNav) {
+                hamburgerBtn.addEventListener('click', function () {
+                    this.classList.toggle('open');
+                    mobileNav.classList.toggle('mobile-open');
+                });
+                
+                // Cerrar si se toca fuera del header
+                document.addEventListener('click', function (e) {
+                    if (!e.target.closest('header')) {
+                        hamburgerBtn.classList.remove('open');
+                        mobileNav.classList.remove('mobile-open');
+                    }
+                });
+            }
+
+            reinitializeSPAComponents();
 
             let lastScrollTop = 0;
             const header = document.getElementById('main-header');
@@ -179,11 +372,6 @@
                 }
                 lastScrollTop = scrollTop;
             });
-
-            if(document.querySelector(".carousel-slide")) {
-                showSlides(slideIndex);
-                startCarousel();
-            }
         });
     </script>
 </body>

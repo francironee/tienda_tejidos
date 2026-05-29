@@ -2,7 +2,7 @@
 
 {% block content %}
 <section class="page-header fade-up">
-    <h2 class="section-title">Nuestro <em>catálogo</em></h2>
+    <h2 class="section-title">Colección <em>invierno</em></h2>
 </section>
 
 <section class="shop-controls fade-up">
@@ -59,7 +59,7 @@
 </section>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    (function() {
         const grid = document.getElementById("productos-grid");
         const productos = Array.from(grid.getElementsByClassName("producto"));
         const catBtns = document.querySelectorAll(".cat-btn");
@@ -123,6 +123,6 @@
                 this.textContent = compactView ? "VISTA NORMAL" : "VISTA COMPACTA";
             });
         }
-    });
+    })();
 </script>
 {% endblock %}
