@@ -51,7 +51,7 @@
         <div class="producto fade-up">
             <a href="{{ url_for('producto_detalle', nombre=dest.nombre) }}" class="producto-img" style="background-image: url('{{ url_for('static', filename=dest.img) }}'); display: block; text-decoration: none;"></a>
             <div class="producto-info">
-                <h3>{{ dest.categoria_rel.nombre | upper }} {{ dest.nombre | upper }}</h3>
+                <h3>{{ dest.nombre | upper }}</h3>
                 <p class="precio">$ {{ "{:,.0f}".format(dest.precio).replace(',', '.') }}</p>
                 <p class="stock">{% if dest.stock > 0 %}EN STOCK{% else %}SIN STOCK{% endif %}</p>
             </div>
