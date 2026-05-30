@@ -1122,8 +1122,50 @@ function initializeSortableImages() {
             .then(res => res.json())
             .then(data => {
                 if (data.ok) {
-                    // Refrescar inventario para mostrar la nueva foto de portada
-                    refreshInventory();
+                    // Actualizar el DOM localmente sin refrescar todo el inventario
+                    // para evitar que se cierren o reseteen los formularios abiertos
+                    const firstEl = container.querySelector('.sortable-img-item');
+                    if (firstEl) {
+                        const firstImg = firstEl.querySelector('img');
+                        if (firstImg) {
+                            const cardImg = document.querySelector('#product-' + productId + ' .admin-card-img');
+                            if (cardImg) {
+                                cardImg.src = firstImg.src;
+                            }
+                        }
+                    }
+                    
+                    // Actualizar estilos y badges locales
+                    const localItems = container.querySelectorAll('.sortable-img-item');
+                    localItems.forEach((item, index) => {
+                        let labelDiv = item.querySelector('div');
+                        if (index === 0) {
+                            item.style.borderColor = 'var(--color-brown)';
+                            item.style.borderWidth = '2px';
+                            item.dataset.imgType = 'main';
+                            if (labelDiv) {
+                                labelDiv.textContent = '★ Principal';
+                                labelDiv.style.color = 'var(--color-brown)';
+                                labelDiv.style.fontWeight = '700';
+                            }
+                            // Ocultar botón borrar de la principal
+                            const btnDel = item.querySelector('.btn-delete-image');
+                            if (btnDel) btnDel.style.display = 'none';
+                        } else {
+                            item.style.borderColor = 'var(--color-cream)';
+                            item.style.borderWidth = '1.5px';
+                            item.dataset.imgType = 'secondary';
+                            if (labelDiv) {
+                                labelDiv.textContent = '☰ arrastrar';
+                                labelDiv.style.color = 'var(--color-taupe)';
+                                labelDiv.style.fontWeight = '600';
+                            }
+                            // Mostrar botón borrar si existía
+                            const btnDel = item.querySelector('.btn-delete-image');
+                            if (btnDel) btnDel.style.display = 'flex';
+                        }
+                    });
+
                     showNotification('Orden de fotos e imagen principal actualizados.');
                 }
             })
