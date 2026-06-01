@@ -847,17 +847,32 @@
             </div>
         </details>
 
-        <!-- FORMULARIO 2: CREAR CATEGORÍA -->
+        <!-- FORMULARIO 2: GESTIONAR CATEGORÍAS -->
         <details class="admin-collapsible" id="collapsible-add-category" style="max-width: 500px;">
-            <summary>Crear nueva categoría</summary>
+            <summary>Gestionar categorías</summary>
             <div class="admin-section">
                 <form id="form-add-categoria" action="{{ url_for('admin_add_categoria') }}" method="POST">
                     <div class="form-group">
-                        <label class="form-label">Nombre de la categoría:</label>
+                        <label class="form-label">Nombre de la nueva categoría:</label>
                         <input type="text" name="nombre_categoria" class="form-input" required placeholder="Ej: Sweaters, Accesorios">
                     </div>
                     <button type="submit" class="admin-btn-primary">GUARDAR CATEGORÍA</button>
                 </form>
+
+                <!-- LISTADO Y GESTIÓN DE CATEGORÍAS (OCULTAR/MOSTRAR) -->
+                <div class="admin-categories-list" id="admin-categories-list-grid" style="margin-top: 20px; border-top: 1.5px solid var(--color-cream); padding-top: 15px;">
+                    <label class="form-label" style="margin-bottom: 10px; display: block; font-weight: bold; color: var(--color-brown); font-family: 'Playfair Display', serif; font-size: 1.05rem;">Categorías Creadas (Visibilidad en Catálogo)</label>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        {% for cat in todas_las_categorias %}
+                        <div class="admin-category-item" id="admin-category-item-{{ cat.id }}" style="display: flex; align-items: center; justify-content: space-between; background: white; border: 1.5px solid var(--color-cream); border-radius: 6px; padding: 8px 12px; transition: border-color 0.3s;">
+                            <span style="font-size: 0.85rem; font-weight: 600; color: var(--color-slate); font-family: 'Montserrat', sans-serif;">{{ cat.nombre }}</span>
+                            <button type="button" class="btn-toggle-categoria" data-category-id="{{ cat.id }}" style="background-color: {% if cat.oculta %}var(--color-sage){% else %}var(--color-brown){% endif %}; color: white; border: none; padding: 5px 10px; font-size: 0.7rem; border-radius: 4px; font-weight: bold; cursor: pointer; transition: background 0.3s, transform 0.1s; width: auto; display: inline-block; font-family: 'Montserrat', sans-serif; letter-spacing: 0.5px;">
+                                {% if cat.oculta %}MOSTRAR EN FILTRO{% else %}OCULTAR EN FILTRO{% endif %}
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </details>
 
@@ -1045,6 +1060,13 @@ function refreshInventory() {
             oldColorsManagement.innerHTML = newColorsManagement.innerHTML;
         }
 
+        // Recargar el panel de gestión de categorías
+        const newCatsManagement = doc.querySelector('#admin-categories-list-grid');
+        const oldCatsManagement = document.querySelector('#admin-categories-list-grid');
+        if (newCatsManagement && oldCatsManagement) {
+            oldCatsManagement.innerHTML = newCatsManagement.innerHTML;
+        }
+
         // 3. Recargar el desplegable de categorías del formulario de añadir
         const newCatSelect = doc.querySelector('#form-add-product select[name="categoria_id"]');
         const oldCatSelect = document.querySelector('#form-add-product select[name="categoria_id"]');
@@ -1057,6 +1079,7 @@ function refreshInventory() {
         initializeSortableImages();
         initializeInventoryActions();
         initializeDeleteColorActions();
+        initializeCategoryActions();
         
         // Restaurar la vista (Lista vs Tarjeta) guardada en localStorage
         const savedView = localStorage.getItem('admin-inventory-view') || 'grid';
@@ -1383,6 +1406,42 @@ function initializeDeleteColorActions() {
     });
 }
 
+// AJAX: Cambiar visibilidad de las categorías (Ocultar/Mostrar en Catálogo)
+function initializeCategoryActions() {
+    document.querySelectorAll('.btn-toggle-categoria').forEach(btn => {
+        btn.onclick = function() {
+            const catId = this.dataset.categoryId;
+            const originalText = this.textContent;
+            this.disabled = true;
+            this.textContent = '...';
+            
+            fetch(`/admin/toggle_categoria/${catId}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message);
+                    refreshInventory(); // Recargar el inventario, categorías y el grid
+                } else {
+                    showNotification(data.message || 'Error al cambiar visibilidad.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error al cambiar visibilidad de la categoría:', error);
+                showNotification('Error al cambiar visibilidad.', 'error');
+            })
+            .finally(() => {
+                this.disabled = false;
+            });
+        };
+    });
+}
+
 // AJAX: Envío de formulario para Añadir Prenda
 function setupAddProductAjax() {
     const form = document.getElementById('form-add-product');
@@ -1562,6 +1621,7 @@ function showNotification(message, type = 'success') {
     initializeSortableImages();
     initializeInventoryActions();
     initializeDeleteColorActions();
+    initializeCategoryActions();
     setupAddProductAjax();
     setupAddCategoryAjax();
     setupAddColorAjax();

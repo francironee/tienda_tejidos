@@ -54,6 +54,7 @@ class Color(db.Model):
 class Categoria(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(50), unique=True, nullable=False)
+    oculta = db.Column(db.Boolean, default=False)
     productos = db.relationship('Producto', backref='categoria_rel', lazy=True)
 
 class Producto(db.Model):
@@ -125,6 +126,15 @@ def init_db():
                 if 'oculto' not in producto_columns:
                     print("Columna 'oculto' no encontrada. Eliminando BD antigua...")
                     db.drop_all()
+            
+            # Migración automática para Categoria.oculta si la tabla categoria ya existe
+            if 'categoria' in tables:
+                categoria_columns = [col['name'] for col in inspector.get_columns('categoria')]
+                if 'oculta' not in categoria_columns:
+                    print("Columna 'oculta' no encontrada en Categoria. Añadiendo columna...")
+                    with db.engine.begin() as conn:
+                        conn.execute(db.text("ALTER TABLE categoria ADD COLUMN oculta BOOLEAN DEFAULT 0"))
+                    print("Columna 'oculta' añadida con éxito.")
         except Exception as e:
             print(f"Error al verificar BD: {e}. Eliminando y recreando...")
             try:
@@ -171,7 +181,8 @@ def productos():
     catalogo = {}
     categorias = Categoria.query.all()
     for cat in categorias:
-        catalogo[cat.nombre] = [p for p in cat.productos if not p.oculto]
+        if not cat.oculta:
+            catalogo[cat.nombre] = [p for p in cat.productos if not p.oculto]
         
     return render_template('productos.html', catalogo=catalogo)
 
@@ -728,6 +739,24 @@ def admin_toggle_visibility(id):
         return {'success': True, 'oculto': producto.oculto, 'message': f'Producto {estado} correctamente.'}
     
     flash(f'Producto {estado} correctamente.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/toggle_categoria/<int:id>', methods=['POST'])
+@login_required
+def admin_toggle_categoria(id):
+    cat = Categoria.query.get_or_404(id)
+    cat.oculta = not cat.oculta
+    db.session.commit()
+    estado = "ocultada" if cat.oculta else "visible"
+    
+    if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return {
+            'success': True,
+            'oculta': cat.oculta,
+            'message': f'La categoría "{cat.nombre}" ahora está {estado} en el catálogo.'
+        }
+    
+    flash(f'La categoría "{cat.nombre}" ahora está {estado} en el catálogo.', 'success')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/reorder_images/<int:product_id>', methods=['POST'])
