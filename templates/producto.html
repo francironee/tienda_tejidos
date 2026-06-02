@@ -44,13 +44,19 @@
             {% if item.colores_rel %}
             <div class="boutique-colors">
                 <span class="color-label">Eligí un color:</span>
-                <div class="color-swatches">
+                <div class="color-swatches" id="color-swatches-container">
                     {% for color in item.colores_rel %}
-                    <button class="color-swatch" onclick="selectColor(this, '{{ color.nombre }}')">
+                    <button class="color-swatch {% if loop.index > 3 %}color-swatch-hidden{% endif %}" onclick="selectColor(this, '{{ color.nombre }}')">
                         <img src="{{ url_for('static', filename=color.imagen_ref) }}" class="swatch-color-circle" alt="{{ color.nombre }}">
                         <span>{{ color.nombre }}</span>
                     </button>
                     {% endfor %}
+                    
+                    {% if item.colores_rel|length > 3 %}
+                    <button type="button" class="btn-toggle-colors" id="btn-toggle-colors" onclick="toggleColors()">
+                        +{{ item.colores_rel|length - 3 }} más
+                    </button>
+                    {% endif %}
                 </div>
             </div>
             {% endif %}
@@ -272,6 +278,19 @@
         if(addToCartBtn) {
             addToCartBtn.textContent = 'AÑADIR AL CARRITO';
             addToCartBtn.style.backgroundColor = 'var(--color-brown)';
+        }
+    }
+
+    function toggleColors() {
+        const container = document.getElementById('color-swatches-container');
+        const btn = document.getElementById('btn-toggle-colors');
+        if (!container || !btn) return;
+        const isExpanded = container.classList.toggle('colors-expanded');
+        if (isExpanded) {
+            btn.textContent = 'Ocultar';
+        } else {
+            const count = container.querySelectorAll('.color-swatch').length - 3;
+            btn.textContent = `+${count} más`;
         }
     }
 

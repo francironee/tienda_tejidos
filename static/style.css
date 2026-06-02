@@ -1140,6 +1140,38 @@ footer {
     border: 1px solid rgba(0,0,0,0.15);
 }
 
+/* Toggle color swatches style */
+.color-swatch-hidden {
+    display: none !important;
+}
+
+.colors-expanded .color-swatch-hidden {
+    display: inline-flex !important;
+}
+
+.btn-toggle-colors {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px dashed var(--color-brown);
+    padding: 6px 14px;
+    border-radius: 24px;
+    font-size: 0.85rem;
+    color: var(--color-brown);
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    transition: all 0.25s ease;
+    outline: none;
+}
+
+.btn-toggle-colors:hover {
+    background-color: var(--color-cream);
+    color: var(--color-slate);
+    border-color: var(--color-slate);
+}
+
 /* Lightbox Zoom */
 .lightbox-modal {
     display: none;
@@ -1529,6 +1561,7 @@ footer {
     #destacados .catalogo {
         display: flex;
         overflow-x: auto;
+        overflow-y: hidden;
         scroll-snap-type: x mandatory;
         gap: 15px;
         padding: 10px 0 15px 0;
