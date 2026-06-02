@@ -31,15 +31,17 @@
                         <p style="margin: 0; font-family: 'Montserrat', sans-serif; font-size: 0.85rem; color: var(--color-taupe); letter-spacing: 1px;">Color: {{ item.color }}</p>
                         {% endif %}
                         
-                        <div class="cart-qty-controls" style="margin-top: 10px;">
-                            <button type="button" class="cart-qty-btn" onclick="updateCart('{{ item.nombre }}', 'decrease', {{ loop.index }})">-</button>
-                            <span id="qty-{{ loop.index }}" style="font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 0.95rem;">{{ item.qty }}</span>
-                            <button type="button" class="cart-qty-btn" onclick="updateCart('{{ item.nombre }}', 'increase', {{ loop.index }})">+</button>
+                        <div style="display: flex; align-items: center; gap: 15px; margin-top: 10px;">
+                            <div class="cart-qty-controls" style="margin: 0;">
+                                <button type="button" class="cart-qty-btn" onclick="updateCart('{{ item.nombre }}', 'decrease', {{ loop.index }})">-</button>
+                                <span id="qty-{{ loop.index }}" style="font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 0.95rem;">{{ item.qty }}</span>
+                                <button type="button" class="cart-qty-btn" onclick="updateCart('{{ item.nombre }}', 'increase', {{ loop.index }})">+</button>
+                            </div>
+                            
+                            <form action="{{ url_for('remove_from_cart', nombre=item.nombre) }}" method="POST" style="margin: 0; display: inline;">
+                                <button type="submit" style="background: none; border: none; color: var(--color-taupe); cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; font-weight: 600; padding: 0; text-decoration: underline; text-underline-offset: 3px; transition: color 0.3s ease;" onmouseover="this.style.color='var(--color-slate)'" onmouseout="this.style.color='var(--color-taupe)'">ELIMINAR</button>
+                            </form>
                         </div>
-                        
-                        <form action="{{ url_for('remove_from_cart', nombre=item.nombre) }}" method="POST" style="margin-top: 10px;">
-                            <button type="submit" style="background: none; border: none; color: var(--color-taupe); cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; font-weight: 600; padding: 0; text-decoration: underline; text-underline-offset: 3px; transition: color 0.3s ease;" onmouseover="this.style.color='var(--color-slate)'" onmouseout="this.style.color='var(--color-taupe)'">ELIMINAR</button>
-                        </form>
                     </div>
                 </div>
                 
