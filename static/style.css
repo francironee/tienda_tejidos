@@ -956,13 +956,16 @@ footer {
     font-size: 1.05rem;
     line-height: 1.8;
     color: var(--color-slate);
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     font-weight: 300;
     white-space: pre-line;
 }
+.boutique-description p {
+    margin: 0;
+}
 
 .boutique-colors {
-    margin-bottom: 24px;
+    margin-bottom: 16px;
     padding: 8px 0;
     border-top: 1px solid #efe5dc;
     border-bottom: 1px solid #efe5dc;
