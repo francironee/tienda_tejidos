@@ -46,7 +46,7 @@
         <span class="section-subtitle" style="margin-top: 10px;">· HECHAS CON AMOR ·</span>
     </div>
 
-    <div class="catalogo">
+    <div class="catalogo" data-lenis-prevent>
         {% for dest in destacados %}
         <div class="producto fade-up">
             <a href="{{ url_for('producto_detalle', nombre=dest.nombre) }}" class="producto-img" style="background-image: url('{{ url_for('static', filename=dest.img) }}'); display: block; text-decoration: none;"></a>

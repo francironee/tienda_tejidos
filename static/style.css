@@ -1572,17 +1572,21 @@ footer {
         scrollbar-color: var(--color-taupe) transparent;
     }
 
-    #destacados .catalogo::-webkit-scrollbar {
+    #destacados .catalogo::-webkit-scrollbar:horizontal {
         display: block !important;
         height: 4px;
     }
 
-    #destacados .catalogo::-webkit-scrollbar-track {
+    #destacados .catalogo::-webkit-scrollbar:vertical {
+        display: none !important;
+    }
+
+    #destacados .catalogo::-webkit-scrollbar-track:horizontal {
         background: rgba(82, 61, 53, 0.08);
         border-radius: 10px;
     }
 
-    #destacados .catalogo::-webkit-scrollbar-thumb {
+    #destacados .catalogo::-webkit-scrollbar-thumb:horizontal {
         background-color: var(--color-taupe);
         border-radius: 10px;
     }

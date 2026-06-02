@@ -43,7 +43,7 @@
 
             {% if item.colores_rel %}
             <div class="boutique-colors">
-                <span class="color-label">Eligí un color:</span>
+                <span class="color-label">Colores Disponibles:</span>
                 <div class="color-swatches" id="color-swatches-container">
                     {% for color in item.colores_rel %}
                     <button class="color-swatch {% if loop.index > 3 %}color-swatch-hidden{% endif %}" onclick="selectColor(this, '{{ color.nombre }}')">
