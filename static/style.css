@@ -1676,16 +1676,143 @@ footer {
         flex-direction: column !important;
         align-items: flex-start !important;
         gap: 12px !important;
+        padding: 16px 0 !important;
     }
 
     .cart-item > div:first-child {
         gap: 16px !important;
     }
 
+    .cart-item img {
+        width: 80px !important;
+        height: 104px !important;
+    }
+
+    .cart-item h4 {
+        font-size: 1.15rem !important;
+    }
+
+    .cart-item p {
+        font-size: 0.78rem !important;
+    }
+
+    .cart-qty-controls {
+        padding: 4px 10px !important;
+        gap: 10px !important;
+    }
+
+    .cart-qty-btn {
+        font-size: 1rem !important;
+    }
+
+    .cart-qty-controls span {
+        font-size: 0.85rem !important;
+    }
+
     /* Precio: alineado a la izquierda cuando se apila */
     .cart-item > div:last-child {
         text-align: left !important;
         width: 100%;
+    }
+
+    .cart-item > div:last-child p {
+        font-size: 1.05rem !important;
+    }
+
+    .empty-cart-btn {
+        padding: 8px 16px !important;
+        font-size: 0.75rem !important;
+        margin-top: 15px !important;
+    }
+
+    .shipping-section {
+        padding: 10px 12px !important;
+    }
+
+    .shipping-section label {
+        padding: 8px !important;
+        font-size: 0.78rem !important;
+    }
+
+    .shipping-section label div div:first-child {
+        font-size: 0.8rem !important;
+    }
+
+    .shipping-section label div div:last-child {
+        font-size: 0.7rem !important;
+    }
+
+    .cart-summary {
+        margin-top: 25px !important;
+    }
+
+    .cart-summary > div {
+        gap: 20px !important;
+        margin-bottom: 20px !important;
+    }
+
+    #cart-total-amount {
+        font-size: 1.6rem !important;
+    }
+
+    .cart-summary button.btn-hero {
+        padding: 14px 20px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Modal de datos en celular */
+    #modal-datos > div {
+        max-height: 95vh !important;
+        margin: 10px !important;
+    }
+
+    #modal-datos > div > div:first-child {
+        padding: 20px 20px 0 20px !important;
+    }
+
+    #modal-datos h3 {
+        font-size: 1.25rem !important;
+    }
+
+    #modal-datos p {
+        font-size: 0.78rem !important;
+    }
+
+    #modal-body-scroll {
+        padding: 15px 20px !important;
+        gap: 10px !important;
+    }
+
+    #modal-body-scroll input, 
+    #modal-body-scroll textarea {
+        padding: 10px 12px !important;
+        font-size: 0.82rem !important;
+    }
+
+    .metodo-pago-card {
+        padding: 10px 12px !important;
+    }
+
+    .metodo-pago-card .metodo-badge-off {
+        font-size: 0.65rem !important;
+        padding: 2px 6px !important;
+        right: 8px !important;
+    }
+
+    .resumen-precio-row {
+        font-size: 0.8rem !important;
+        padding: 2px 0 !important;
+    }
+
+    .resumen-precio-row.total-row {
+        font-size: 0.95rem !important;
+        margin-top: 4px !important;
+        padding-top: 8px !important;
+    }
+
+    #modal-datos button#btn-confirmar-pago {
+        padding: 14px !important;
+        font-size: 0.8rem !important;
     }
 
     /* =============================================
