@@ -958,6 +958,7 @@ footer {
     color: var(--color-slate);
     margin-bottom: 30px;
     font-weight: 300;
+    white-space: pre-line;
 }
 
 .boutique-colors {
@@ -1038,6 +1039,7 @@ footer {
     line-height: 1.6;
     color: var(--color-slate);
     opacity: 0.8;
+    white-space: pre-line;
 }
 
 .boutique-actions {
