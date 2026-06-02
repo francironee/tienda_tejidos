@@ -1021,6 +1021,10 @@ footer {
     color: var(--color-brown);
 }
 
+.accordion-header.active:hover {
+    color: var(--color-offwhite);
+}
+
 .accordion-content {
     max-height: 0;
     overflow: hidden;

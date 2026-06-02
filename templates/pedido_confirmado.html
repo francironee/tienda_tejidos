@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedido Confirmado | Tejidos Margot{% endblock %}
+{% block meta_description %}Tu pedido en Tejidos Margot ha sido confirmado. Seguí los pasos para completar tu pago y recibir tus tejidos artesanales.{% endblock %}
+
+{% block content %}
+<style>
+    @keyframes checkmark-pop {
+        0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+        70%  { transform: scale(1.15) rotate(5deg); opacity: 1; }
+        100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    @keyframes fade-slide-up {
+        from { opacity: 0; transform: translateY(24px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .confirmado-icon {
+        animation: checkmark-pop 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    .confirmado-card {
+        animation: fade-slide-up 0.6s ease forwards;
+    }
+    .confirmado-card:nth-child(2) { animation-delay: 0.15s; opacity: 0; }
+    .confirmado-card:nth-child(3) { animation-delay: 0.30s; opacity: 0; }
+    .confirmado-card:nth-child(4) { animation-delay: 0.45s; opacity: 0; }
+
+    .btn-copiar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--color-brown);
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+        margin: 0;
+        padding: 0;
+    }
+    .btn-copiar:hover {
+        background: var(--color-slate);
+        transform: scale(1.08);
+    }
+    .btn-copiar.copiado {
+        background: #2e7d32;
+    }
+
+    .btn-wsp {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: #25D366;
+        color: #fff;
+        border: none;
+        padding: 18px 30px;
+        border-radius: 8px;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.9rem;
+        font-weight: 700;
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        width: 100%;
+        max-width: 420px;
+        box-sizing: border-box;
+    }
+    .btn-wsp:hover {
+        background: #128C7E;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(37,211,102,0.3);
+    }
+
+    .precio-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.9rem;
+        color: var(--color-taupe);
+    }
+    .precio-row.descuento {
+        color: #2e7d32;
+        font-weight: 700;
+    }
+    .precio-row.total {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--color-brown);
+        border-top: 2px solid var(--color-cream);
+        margin-top: 8px;
+        padding-top: 12px;
+    }
+
+    .paso-number {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--color-brown);
+        color: #fff;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 700;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .alias-box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--color-offwhite);
+        border: 2px solid var(--color-cream);
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-top: 10px;
+        gap: 12px;
+    }
+    .alias-text {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--color-brown);
+        letter-spacing: 1.5px;
+    }
+</style>
+
+<section class="page-header fade-up" style="text-align: center; padding-bottom: 1rem;">
+    <h2 class="section-title">¡Muchas <em>gracias</em>!</h2>
+    <span class="section-subtitle">· DETALLE PEDIDO ·</span>
+</section>
+
+<section style="max-width: 680px; margin: 0 auto; padding: 0 20px 80px 20px; display: flex; flex-direction: column; gap: 24px;">
+
+    <!-- Encabezado de confirmación -->
+    <div class="confirmado-card" style="text-align: center; padding: 40px 30px; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(82,61,53,0.08);">
+        <div class="confirmado-icon" style="display: inline-flex; align-items: center; justify-content: center; width: 80px; height: 80px; background: #e8f5e9; border-radius: 50%; margin-bottom: 20px;">
+            <i class="fa-solid fa-circle-check" style="font-size: 2.5rem; color: #2e7d32;"></i>
+        </div>
+        <h3 style="font-family: 'Playfair Display', serif; color: var(--color-brown); font-size: 1.8rem; margin: 0 0 10px 0;">¡Pedido confirmado, {{ pedido.nombre.split()[0] }}!</h3>
+        <p style="font-family: 'Montserrat', sans-serif; font-size: 0.9rem; color: var(--color-taupe); line-height: 1.6; margin: 0;">
+            Te enviamos un correo a <strong>{{ pedido.email }}</strong> con todos los detalles.
+        </p>
+    </div>
+
+    <!-- Resumen del pedido -->
+    <div class="confirmado-card" style="background: #fff; border-radius: 12px; padding: 28px; box-shadow: 0 4px 16px rgba(82,61,53,0.06);">
+        <h4 style="font-family: 'Montserrat', sans-serif; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; color: var(--color-taupe); margin: 0 0 16px 0;">Detalle del pedido</h4>
+        <p style="font-family: 'Montserrat', sans-serif; font-size: 0.72rem; color: #a59b95; opacity: 0.8; margin: -12px 0 16px 0; letter-spacing: 1px;">#{{ pedido.pedido_id }}</p>
+        {% for item in pedido.productos %}
+        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--color-cream);">
+            <span style="font-family: 'Montserrat', sans-serif; font-size: 0.88rem; color: var(--color-slate);">{{ item.qty }}× {{ item.descripcion }}</span>
+            <span style="font-family: 'Montserrat', sans-serif; font-size: 0.88rem; font-weight: 600; color: var(--color-brown);">$ {{ "{:,.0f}".format(item.precio * item.qty).replace(',', '.') }}</span>
+        </div>
+        {% endfor %}
+
+        <div style="margin-top: 14px;">
+            <div class="precio-row">
+                <span>Subtotal</span>
+                <span>$ {{ "{:,.0f}".format(pedido.subtotal).replace(',', '.') }}</span>
+            </div>
+            <div class="precio-row descuento">
+                <span><i class="fa-solid fa-tag" style="margin-right: 6px;"></i>10% OFF</span>
+                <span>- $ {{ "{:,.0f}".format(pedido.descuento).replace(',', '.') }}</span>
+            </div>
+            {% if pedido.costo_envio > 0 %}
+            <div class="precio-row">
+                <span>Envío</span>
+                <span>$ {{ "{:,.0f}".format(pedido.costo_envio).replace(',', '.') }}</span>
+            </div>
+            {% endif %}
+            <div class="precio-row total">
+                <span>TOTAL A PAGAR</span>
+                <span>$ {{ "{:,.0f}".format(pedido.total).replace(',', '.') }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instrucciones de pago -->
+    {% if pedido.metodo_pago == 'transferencia' %}
+    <div class="confirmado-card" style="background: #fff; border-radius: 12px; padding: 28px; box-shadow: 0 4px 16px rgba(82,61,53,0.06); border-left: 4px solid #2e7d32;">
+        <h4 style="font-family: 'Montserrat', sans-serif; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; color: #2e7d32; margin: 0 0 20px 0;">💸 Pasos para completar tu pago</h4>
+
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; gap: 14px; align-items: flex-start;">
+                <div class="paso-number">1</div>
+                <div>
+                    <p style="font-family: 'Montserrat', sans-serif; font-size: 0.88rem; color: var(--color-slate); margin: 0 0 4px 0; font-weight: 600;">Realizá la transferencia</p>
+                    <p style="font-family: 'Montserrat', sans-serif; font-size: 0.82rem; color: var(--color-taupe); margin: 0; line-height: 1.5;">
+                        Desde tu app del banco o Mercado Pago, transferí al siguiente alias:
+                    </p>
+                    <div class="alias-box">
+                        <span class="alias-text" id="alias-texto">tejidos.margot.mp</span>
+                        <button class="btn-copiar" id="btn-copiar-alias" onclick="copiarAlias()" title="Copiar alias">
+                            <i class="fa-solid fa-copy" id="icono-copiar" style="font-size: 0.9rem;"></i>
+                        </button>
+                    </div>
+                    <p style="font-family: 'Montserrat', sans-serif; font-size: 0.78rem; color: var(--color-taupe); margin: 10px 0 0 0;">
+                        Monto exacto a transferir: <strong style="color: var(--color-brown);">$ {{ "{:,.0f}".format(pedido.total).replace(',', '.') }}</strong>
+                    </p>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 14px; align-items: flex-start;">
+                <div class="paso-number">2</div>
+                <div>
+                    <p style="font-family: 'Montserrat', sans-serif; font-size: 0.88rem; color: var(--color-slate); margin: 0 0 4px 0; font-weight: 600;">Envianos el comprobante</p>
+                    <p style="font-family: 'Montserrat', sans-serif; font-size: 0.82rem; color: var(--color-taupe); margin: 0; line-height: 1.5;">
+                        Mandanos la captura del comprobante por WhatsApp. Apenas lo confirmemos, empezaremos a preparar tu pedido.
+                    </p>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 14px; align-items: flex-start;">
+                <div class="paso-number">3</div>
+                <div>
+                    <p style="font-family: 'Montserrat', sans-serif; font-size: 0.88rem; color: var(--color-slate); margin: 0 0 4px 0; font-weight: 600;">Coordinamos el envío o retiro</p>
+                    <p style="font-family: 'Montserrat', sans-serif; font-size: 0.82rem; color: var(--color-taupe); margin: 0; line-height: 1.5;">
+                        Te contactaremos al privado para coordinar el envío o el retiro por nuestro showroom.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% elif pedido.metodo_pago == 'efectivo' %}
+    <div class="confirmado-card" style="background: #fff; border-radius: 12px; padding: 28px; box-shadow: 0 4px 16px rgba(82,61,53,0.06); border-left: 4px solid #FFC107;">
+        <h4 style="font-family: 'Montserrat', sans-serif; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; color: #e65100; margin: 0 0 20px 0;">💵 Pasos para completar tu pedido</h4>
+
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; gap: 14px; align-items: flex-start;">
+                <div class="paso-number" style="background: #e65100;">1</div>
+                <div>
+                    <p style="font-family: 'Montserrat', sans-serif; font-size: 0.88rem; color: var(--color-slate); margin: 0 0 4px 0; font-weight: 600;">Coordiná el retiro por WhatsApp</p>
+                    <p style="font-family: 'Montserrat', sans-serif; font-size: 0.82rem; color: var(--color-taupe); margin: 0; line-height: 1.5;">
+                        Escribinos para coordinar el día y horario. Nuestro showroom está en zona <strong>Villa Pueyrredón, CABA</strong>.
+                    </p>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 14px; align-items: flex-start;">
+                <div class="paso-number" style="background: #e65100;">2</div>
+                <div>
+                    <p style="font-family: 'Montserrat', sans-serif; font-size: 0.88rem; color: var(--color-slate); margin: 0 0 4px 0; font-weight: 600;">Aboná al retirar</p>
+                    <p style="font-family: 'Montserrat', sans-serif; font-size: 0.82rem; color: var(--color-taupe); margin: 0; line-height: 1.5;">
+                        Al momento del retiro, abonás en efectivo el monto total de tu pedido.
+                    </p>
+                    <div style="background: var(--color-offwhite); border-radius: 8px; padding: 12px 16px; margin-top: 10px; display: inline-flex; align-items: center; gap: 12px;">
+                        <i class="fa-solid fa-money-bill-wave" style="color: #e65100; font-size: 1.2rem;"></i>
+                        <div>
+                            <div style="font-family: 'Montserrat', sans-serif; font-size: 0.78rem; color: var(--color-taupe);">Total a abonar</div>
+                            <div style="font-family: 'Montserrat', sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--color-brown);">$ {{ "{:,.0f}".format(pedido.total).replace(',', '.') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Botón WhatsApp -->
+    <div class="confirmado-card" style="text-align: center;">
+        {% if pedido.metodo_pago == 'transferencia' %}
+        {% set wsp_msg = '¡Hola! Soy ' ~ pedido.nombre ~ ' y te escribo para pasarte el comprobante de pago de mi pedido #' ~ pedido.pedido_id ~ '. ¡Muchas gracias! 🧶' %}
+        {% elif pedido.metodo_pago == 'efectivo' %}
+        {% set wsp_msg = '¡Hola! Soy ' ~ pedido.nombre ~ '. Quería coordinar el día y horario para retirar mi pedido #' ~ pedido.pedido_id ~ ' por el showroom y realizar el pago en efectivo. ¡Muchas gracias! 🧶' %}
+        {% endif %}
+        <a href="https://wa.me/5491125193017?text={{ wsp_msg | urlencode }}" target="_blank" rel="noopener noreferrer" class="btn-wsp">
+            <i class="fa-brands fa-whatsapp" style="font-size: 1.3rem;"></i>
+            {% if pedido.metodo_pago == 'transferencia' %}
+            ENVIAR COMPROBANTE
+            {% else %}
+            COORDINAR RETIRO
+            {% endif %}
+        </a>
+        <p style="font-family: 'Montserrat', sans-serif; font-size: 0.78rem; color: var(--color-taupe); margin-top: 14px; line-height: 1.5;">
+            O podés directamente escribirnos al <strong>+54 11 2519-3017</strong>
+        </p>
+    </div>
+
+    <!-- Volver al inicio -->
+    <div style="text-align: center; padding-bottom: 20px;">
+        <p style="font-family: 'Playfair Display', serif; font-style: italic; color: var(--color-taupe); font-size: 1.1rem; margin-bottom: 20px;">
+            ¡Gracias por abrigarte con un diseño Margot!
+        </p>
+        <a href="{{ url_for('inicio') }}" class="btn-hero" style="font-size: 0.82rem; padding: 16px 40px; border-radius: 6px;">VOLVER AL INICIO</a>
+    </div>
+
+</section>
+
+<script>
+window.copiarAlias = function() {
+    const alias = document.getElementById('alias-texto').innerText;
+    navigator.clipboard.writeText(alias).then(() => {
+        const btn = document.getElementById('btn-copiar-alias');
+        const icono = document.getElementById('icono-copiar');
+        btn.classList.add('copiado');
+        icono.className = 'fa-solid fa-check';
+        setTimeout(() => {
+            btn.classList.remove('copiado');
+            icono.className = 'fa-solid fa-copy';
+        }, 2500);
+    }).catch(() => {
+        // Fallback por si no hay permisos de clipboard
+        const el = document.createElement('textarea');
+        el.value = alias;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        const btn = document.getElementById('btn-copiar-alias');
+        const icono = document.getElementById('icono-copiar');
+        btn.classList.add('copiado');
+        icono.className = 'fa-solid fa-check';
+        setTimeout(() => {
+            btn.classList.remove('copiado');
+            icono.className = 'fa-solid fa-copy';
+        }, 2500);
+    });
+};
+</script>
+{% endblock %}

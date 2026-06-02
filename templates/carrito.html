@@ -2,8 +2,8 @@
 
 {% block content %}
 <section class="page-header fade-up" style="text-align: center; padding-bottom: 2rem;">
-    <span class="section-subtitle">· DETALLE DE COMPRA ·</span>
     <h2 class="section-title">Tu <em>carrito</em></h2>
+    <span class="section-subtitle">· DETALLE DE COMPRA ·</span>
 </section>
 
 <section class="carrito-container fade-up" style="max-width: 800px; margin: 0 auto; padding: 0 20px 80px 20px;">
@@ -64,8 +64,8 @@
                     <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 10px; background: #fff; border-radius: 4px; border: 2px solid transparent; transition: border-color 0.3s; font-size: 0.85rem;" onmouseover="this.style.borderColor='var(--color-sage)'" onmouseout="if(!document.getElementById('retiro').checked) this.style.borderColor='transparent'">
                         <input type="radio" name="tipo_envio" id="retiro" value="retiro" checked onchange="seleccionarEnvio('retiro')" style="margin: 0;">
                         <div style="flex: 1;">
-                            <div style="font-family: 'Montserrat', sans-serif; font-weight: 600; color: var(--color-brown);">Retiro en showroom</div>
-                            <div style="font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--color-sage);">Villa Pueyrredón - Gratis</div>
+                            <div style="font-family: 'Montserrat', sans-serif; font-weight: 600; color: var(--color-brown);">Retiro por Showroom (CABA)</div>
+                            <div style="font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--color-sage);">Gratis</div>
                         </div>
                     </label>
                     
@@ -82,7 +82,7 @@
                     <div id="mensaje-envio-info" style="display: none; padding: 10px; background: #fff; border-radius: 4px;">
                         <p style="margin: 0; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--color-brown); line-height: 1.4;">
                             <i class="fa-solid fa-info-circle" style="color: var(--color-sage); margin-right: 5px;"></i>
-                            Coordinaremos el precio y método de envío por privado tras la compra.
+                            El precio y método de envío se coordina por privado una vez finalizada la compra.
                         </p>
                     </div>
                 </div>
@@ -96,7 +96,7 @@
             </div>
             
             <form action="{{ url_for('checkout_mp') }}" method="POST" id="checkout-form" style="display:none;"></form>
-            <button type="button" class="btn-hero" onclick="abrirModalDatos()" style="width: 100%; max-width: 350px; font-size: 0.85rem; padding: 20px; float: right; border-radius: 2px;">FINALIZAR COMPRA</button>
+            <button type="button" class="btn-hero" onclick="abrirModalDatos()" style="width: 100%; max-width: 350px; font-size: 0.85rem; padding: 20px; float: right; border-radius: 2px;">CONTINUAR CON EL PAGO</button>
             <div style="clear: both;"></div>
             <p style="font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--color-sage); margin-top: 15px; letter-spacing: 1px;"><i class="fa-solid fa-lock" style="margin-right: 5px;"></i> Pago seguro y protegido</p>
         </div>
@@ -105,7 +105,7 @@
         <div style="text-align: center; padding: 80px 0; border-top: 1px solid var(--color-cream); border-bottom: 1px solid var(--color-cream);">
             <i class="fa-solid fa-bag-shopping" style="font-size: 3rem; color: var(--color-cream); margin-bottom: 25px;"></i>
             <p style="font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--color-brown); margin: 0 0 10px 0;">Tu carrito está vacío</p>
-            <p style="font-family: 'Montserrat', sans-serif; font-size: 0.9rem; color: var(--color-sage); margin-bottom: 40px;">Descubrí nuestro catálogo y encontrá piezas únicas tejidas con amor.</p>
+            <p style="font-family: 'Montserrat', sans-serif; font-size: 0.9rem; color: var(--color-sage); margin-bottom: 40px;">Explorá nuestro catálogo y encontrá piezas únicas tejidas con amor.</p>
             <a href="{{ url_for('productos') }}" class="btn-hero" style="font-size: 0.8rem; padding: 15px 40px; border-radius: 2px;">EXPLORAR CATÁLOGO</a>
         </div>
     {% endif %}
@@ -118,9 +118,7 @@
     window.updateCart = function(key, action, index) {
         fetch('/update_cart/' + encodeURIComponent(key) + '/' + action, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({})
         })
         .then(response => response.json())
@@ -128,18 +126,14 @@
             if (data.success) {
                 if (data.deleted) {
                     document.getElementById('item-' + index).remove();
-                    if (data.cart_count === 0) {
-                        location.reload();
-                    }
+                    if (data.cart_count === 0) { location.reload(); }
                 } else {
                     document.getElementById('qty-' + index).innerText = data.new_qty;
                     let formattedSubtotal = data.item_subtotal.toLocaleString('es-AR');
                     document.getElementById('subtotal-' + index).innerText = '$ ' + formattedSubtotal.replace(/,/g, '.');
                 }
-                
                 let formattedTotal = data.cart_total.toLocaleString('es-AR');
                 document.getElementById('cart-total-amount').innerText = '$ ' + formattedTotal.replace(/,/g, '.');
-                
                 const badge = document.querySelector('.cart-badge');
                 if (badge) badge.textContent = data.cart_count;
             }
@@ -150,7 +144,6 @@
     window.seleccionarEnvio = function(tipo) {
         const mensajeEnvio = document.getElementById('mensaje-envio-info');
         tipoEnvioSeleccionado = tipo;
-        
         if (tipo === 'envio') {
             mensajeEnvio.style.display = 'block';
             fetch('/guardar_envio', {
@@ -166,28 +159,129 @@
                 body: JSON.stringify({ tipo: 'retiro', costo: 0, zona: 'Retiro showroom', cp: '' })
             });
         }
+        actualizarDisponibilidadEfectivo(tipo);
     };
+
+    function actualizarDisponibilidadEfectivo(tipo) {
+        const cardEfectivo = document.getElementById('metodo-efectivo');
+        const radioEfectivo = document.getElementById('radio-efectivo');
+        if (!cardEfectivo) return;
+        if (tipo === 'envio') {
+            cardEfectivo.style.opacity = '0.45';
+            cardEfectivo.style.cursor = 'not-allowed';
+            cardEfectivo.title = 'Solo disponible para Retiro en Showroom';
+            radioEfectivo.disabled = true;
+            if (metodoPagoSeleccionado === 'efectivo') { seleccionarMetodoPago('mercadopago'); }
+        } else {
+            cardEfectivo.style.opacity = '1';
+            cardEfectivo.style.cursor = 'pointer';
+            cardEfectivo.title = '';
+            radioEfectivo.disabled = false;
+        }
+    }
+
+    let metodoPagoSeleccionado = 'mercadopago';
+    const DESCUENTO = 0.10;
+    const subtotalBase = {{ total }};
+
+    window.seleccionarMetodoPago = function(metodo) {
+        if (metodo === 'efectivo' && tipoEnvioSeleccionado === 'envio') return;
+        metodoPagoSeleccionado = metodo;
+        ['mercadopago', 'transferencia', 'efectivo'].forEach(m => {
+            const card = document.getElementById('metodo-' + m);
+            const radio = document.getElementById('radio-' + m);
+            if (card) card.classList.remove('metodo-pago-activo');
+            if (radio) radio.checked = (m === metodo);
+        });
+        const activeCard = document.getElementById('metodo-' + metodo);
+        if (activeCard) activeCard.classList.add('metodo-pago-activo');
+        actualizarResumenPrecio();
+        actualizarBotonPago();
+    };
+
+    function actualizarResumenPrecio() {
+        const tieneDescuento = (metodoPagoSeleccionado === 'transferencia' || metodoPagoSeleccionado === 'efectivo');
+        const descuento = tieneDescuento ? Math.round(subtotalBase * DESCUENTO) : 0;
+        const total = subtotalBase - descuento;
+        const filaDesc = document.getElementById('resumen-descuento-row');
+        const spanDesc = document.getElementById('resumen-descuento');
+        const spanTotal = document.getElementById('resumen-total');
+        const spanSubtotal = document.getElementById('resumen-subtotal');
+        const filaEnvio = document.getElementById('resumen-envio-row');
+        if (spanSubtotal) spanSubtotal.innerText = '$ ' + formatMoney(subtotalBase);
+        if (filaDesc) filaDesc.style.display = tieneDescuento ? 'flex' : 'none';
+        if (spanDesc) spanDesc.innerText = '- $ ' + formatMoney(descuento);
+        if (spanTotal) spanTotal.innerText = '$ ' + formatMoney(total);
+        if (filaEnvio) filaEnvio.style.display = (tipoEnvioSeleccionado === 'envio') ? 'flex' : 'none';
+        if (spanTotal) {
+            spanTotal.classList.remove('precio-animado');
+            void spanTotal.offsetWidth;
+            spanTotal.classList.add('precio-animado');
+        }
+    }
+
+    function actualizarBotonPago() {
+        const btn = document.getElementById('btn-confirmar-pago');
+        const icono = document.getElementById('btn-pago-icono');
+        const texto = document.getElementById('btn-pago-texto');
+        if (!btn) return;
+        if (metodoPagoSeleccionado === 'mercadopago') {
+            btn.dataset.esMP = '1';
+            if (icono) icono.innerHTML = '<i class="fa-brands fa-cc-mastercard"></i>';
+            if (texto) texto.innerText = 'CONFIRMAR PEDIDO';
+        } else {
+            btn.dataset.esMP = '0';
+            if (icono) icono.innerHTML = '<i class="fa-solid fa-check-circle"></i>';
+            if (texto) texto.innerText = 'CONFIRMAR PEDIDO';
+        }
+    }
+
+    function formatMoney(n) {
+        return n.toLocaleString('es-AR').replace(/,/g, '.');
+    }
+
+    let scrollPosition = 0;
 
     window.abrirModalDatos = function() {
         const direccionContainer = document.getElementById('campo-direccion-container');
         const direccionInput = document.getElementById('campo-direccion');
-        
+        const cpInput = document.getElementById('campo-cp');
         if (tipoEnvioSeleccionado === 'envio') {
             direccionContainer.style.display = 'block';
             direccionInput.required = true;
+            if (cpInput) cpInput.required = true;
         } else {
             direccionContainer.style.display = 'none';
             direccionInput.required = false;
             direccionInput.value = '';
+            if (cpInput) {
+                cpInput.required = false;
+                cpInput.value = '';
+            }
         }
+        actualizarDisponibilidadEfectivo(tipoEnvioSeleccionado);
+        actualizarResumenPrecio();
+        actualizarBotonPago();
+        
+        // Lock body scroll completely
+        scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollPosition}px`;
+        document.body.style.width = '100%';
         
         document.getElementById('modal-datos').style.display = 'flex';
-        document.body.style.overflow = 'hidden';
     };
 
     window.cerrarModalDatos = function() {
         document.getElementById('modal-datos').style.display = 'none';
-        document.body.style.overflow = 'auto';
+        
+        // Restore body scroll
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, scrollPosition);
     };
 
     window.confirmarYPagar = function() {
@@ -195,22 +289,46 @@
         const celular = document.getElementById('campo-celular').value.trim();
         const email = document.getElementById('campo-email').value.trim();
         const direccion = document.getElementById('campo-direccion').value.trim();
+        const cp = document.getElementById('campo-cp') ? document.getElementById('campo-cp').value.trim() : '';
 
         if (!nombre || !celular || !email) {
             document.getElementById('modal-error').innerText = 'Por favor completá todos los campos.';
             document.getElementById('modal-error').style.display = 'block';
             return;
         }
-
-        if (tipoEnvioSeleccionado === 'envio' && !direccion) {
-            document.getElementById('modal-error').innerText = 'Por favor ingresá tu dirección de envío.';
+        if (tipoEnvioSeleccionado === 'envio' && (!direccion || !cp)) {
+            document.getElementById('modal-error').innerText = 'Por favor ingresá tu dirección de envío y código postal.';
             document.getElementById('modal-error').style.display = 'block';
             return;
         }
 
-        const datosCliente = { nombre, celular, email };
+        const datosCliente = { nombre, celular, email, metodo_pago: metodoPagoSeleccionado };
         if (tipoEnvioSeleccionado === 'envio') {
             datosCliente.direccion = direccion;
+            datosCliente.cp = cp;
+        }
+
+        // Animación de carga estilo Mercado Pago
+        const btn = document.getElementById('btn-confirmar-pago');
+        const icono = document.getElementById('btn-pago-icono');
+        const texto = document.getElementById('btn-pago-texto');
+        if (btn) {
+            btn.disabled = true;
+            const esMP = btn.dataset.esMP === '1';
+            const fillColor = esMP ? '#009ee3' : '#2e7d32';
+            const baseColor = esMP ? 'var(--color-brown)' : '#1b5e20';
+            btn.style.background = `linear-gradient(90deg, ${fillColor} 0%, ${baseColor} 0%)`;
+            btn.style.backgroundSize = '100% 100%';
+            btn.style.transition = 'none';
+            if (icono) icono.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            if (texto) texto.innerText = 'Confirmando...';
+            // Animar el fill de izquierda a derecha en 1.4s
+            let pct = 0;
+            const interval = setInterval(() => {
+                pct = Math.min(pct + 1.5, 90);
+                btn.style.background = `linear-gradient(90deg, ${fillColor} ${pct}%, ${baseColor} ${pct}%)`;
+            }, 20);
+            btn._fillInterval = interval;
         }
 
         fetch('/guardar_datos_cliente', {
@@ -221,36 +339,198 @@
         .then(r => r.json())
         .then(data => {
             if (data.ok) {
+                // Completar el fill al 100% y enviar
+                if (btn && btn._fillInterval) {
+                    clearInterval(btn._fillInterval);
+                    const esMP = btn.dataset.esMP === '1';
+                    const fillColor = esMP ? '#009ee3' : '#2e7d32';
+                    btn.style.background = fillColor;
+                }
                 document.getElementById('checkout-form').submit();
+            }
+        })
+        .catch(() => {
+            if (btn) {
+                clearInterval(btn._fillInterval);
+                btn.disabled = false;
+                btn.style.background = '';
+                btn.style.transition = 'all 0.3s';
+                actualizarBotonPago();
             }
         });
     };
+
+    // Capturar rueda del mouse en el modal para que no haga scroll al fondo
+    function initScrollLock() {
+        const modalEl = document.getElementById('modal-datos');
+        const scrollEl = document.getElementById('modal-body-scroll');
+        if (modalEl && scrollEl) {
+            modalEl.addEventListener('wheel', function(e) {
+                if (!scrollEl.contains(e.target)) {
+                    e.preventDefault();
+                    return;
+                }
+                const atTop = scrollEl.scrollTop === 0;
+                const atBottom = scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 1;
+                if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) {
+                    e.preventDefault();
+                } else {
+                    e.stopPropagation();
+                }
+            }, { passive: false });
+
+            // Mobile/Touch drag scroll lock for background
+            modalEl.addEventListener('touchmove', function(e) {
+                if (!scrollEl.contains(e.target)) {
+                    e.preventDefault();
+                    return;
+                }
+                const atTop = scrollEl.scrollTop === 0;
+                const atBottom = scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 1;
+                const touchY = e.touches[0].clientY;
+                const isScrollingUp = touchY > (scrollEl._lastTouchY || 0);
+                const isScrollingDown = touchY < (scrollEl._lastTouchY || 0);
+                scrollEl._lastTouchY = touchY;
+
+                if ((isScrollingUp && atTop) || (isScrollingDown && atBottom)) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            scrollEl.addEventListener('touchstart', function(e) {
+                scrollEl._lastTouchY = e.touches[0].clientY;
+            }, { passive: true });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScrollLock);
+    } else {
+        initScrollLock();
+    }
 })();
 </script>
 
 <!-- Modal de datos del cliente -->
-<div id="modal-datos" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center; padding:20px;">
-    <div style="background:#fff; border-radius:8px; padding:40px; max-width:480px; width:100%; font-family:'Montserrat',sans-serif; position:relative;">
-        <button onclick="cerrarModalDatos()" style="position:absolute; top:16px; right:16px; background:none; border:none; font-size:1.8rem; cursor:pointer; color:var(--color-taupe); line-height:1; width:32px; height:32px; padding:0; margin:0; display:flex; align-items:center; justify-content:center; z-index:10;" aria-label="Cerrar modal">×</button>
-        <h3 style="font-family:'Playfair Display',serif; color:var(--color-brown); font-size:1.6rem; margin-bottom:8px;">Antes de continuar</h3>
-        <p style="font-size:0.85rem; color:var(--color-taupe); margin-bottom:28px; letter-spacing:0.5px;">Necesitamos tus datos.</p>
+<style>
+    .metodo-pago-card {
+        display: flex; align-items: center; gap: 12px;
+        padding: 14px 16px; border: 2px solid var(--color-cream);
+        border-radius: 8px; cursor: pointer; transition: all 0.25s ease;
+        background: #fff; position: relative; user-select: none;
+    }
+    .metodo-pago-card:hover { border-color: var(--color-taupe); box-shadow: 0 2px 8px rgba(82,61,53,0.10); }
+    .metodo-pago-card.metodo-pago-activo { border-color: var(--color-brown); background: #fdf8f5; box-shadow: 0 3px 12px rgba(82,61,53,0.15); }
+    .metodo-pago-card input[type="radio"] { accent-color: var(--color-brown); width: 18px; height: 18px; flex-shrink: 0; }
+    .metodo-badge-off {
+        position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+        background: #2e7d32; color: #fff; font-size: 0.7rem; font-weight: 700;
+        padding: 3px 8px; border-radius: 20px; letter-spacing: 0.5px;
+    }
+    .resumen-precio-row {
+        display: flex; justify-content: space-between; align-items: center;
+        font-family: 'Montserrat', sans-serif; font-size: 0.88rem; color: var(--color-taupe); padding: 4px 0;
+    }
+    .resumen-precio-row.total-row {
+        font-size: 1.1rem; font-weight: 700; color: var(--color-brown);
+        border-top: 1px solid var(--color-cream); margin-top: 6px; padding-top: 10px;
+    }
+    .resumen-precio-row.descuento-row { color: #2e7d32; font-weight: 600; }
+    @keyframes precio-flash {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); color: #2e7d32; }
+        100% { transform: scale(1); }
+    }
+    .precio-animado { animation: precio-flash 0.4s ease; }
+</style>
 
-        <div style="display:flex; flex-direction:column; gap:16px;">
-            <input id="campo-nombre" type="text" placeholder="NOMBRE COMPLETO" style="padding:14px 16px; border:2px solid var(--color-cream); border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.9rem; width:100%; box-sizing:border-box;">
-            <input id="campo-celular" type="tel" placeholder="NÚMERO DE CELULAR" style="padding:14px 16px; border:2px solid var(--color-cream); border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.9rem; width:100%; box-sizing:border-box;">
-            <input id="campo-email" type="email" placeholder="EMAIL" style="padding:14px 16px; border:2px solid var(--color-cream); border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.9rem; width:100%; box-sizing:border-box;">
-            
-            <!-- Campo de dirección (solo visible si elige envío) -->
+<div id="modal-datos" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.72); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:#fff; border-radius:12px; max-width:520px; width:100%; font-family:'Montserrat',sans-serif; display:flex; flex-direction:column; max-height:90vh;">
+
+        <!-- Header fijo: título + botón cerrar a la misma altura -->
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; padding:28px 28px 0 28px; flex-shrink:0;">
+            <div>
+                <h3 style="font-family:'Playfair Display',serif; color:var(--color-brown); font-size:1.5rem; margin:0 0 4px 0;">Antes de continuar</h3>
+                <p style="font-size:0.82rem; color:var(--color-taupe); margin:0; letter-spacing:0.5px;">Ingresá tus datos y elegí cómo pagar.</p>
+            </div>
+            <button onclick="cerrarModalDatos()" style="background:none; border:none; font-size:1.8rem; cursor:pointer; color:var(--color-taupe); line-height:1; width:36px; height:36px; padding:0; margin:0 0 0 12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;" aria-label="Cerrar modal">×</button>
+        </div>
+
+        <!-- Cuerpo scrollable con captura de rueda -->
+        <div id="modal-body-scroll" style="overflow-y:auto; flex:1; padding:20px 28px; display:flex; flex-direction:column; gap:14px; overscroll-behavior:contain; scroll-behavior:smooth; -webkit-overflow-scrolling:touch;">
+            <input id="campo-nombre" type="text" placeholder="NOMBRE COMPLETO" style="padding:14px 16px; border:2px solid var(--color-cream); border-radius:6px; font-family:'Montserrat',sans-serif; font-size:0.9rem; width:100%; box-sizing:border-box; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--color-brown)'" onblur="this.style.borderColor='var(--color-cream)'">
+            <input id="campo-celular" type="tel" placeholder="NÚMERO DE CELULAR" style="padding:14px 16px; border:2px solid var(--color-cream); border-radius:6px; font-family:'Montserrat',sans-serif; font-size:0.9rem; width:100%; box-sizing:border-box; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--color-brown)'" onblur="this.style.borderColor='var(--color-cream)'">
+            <input id="campo-email" type="email" placeholder="EMAIL" style="padding:14px 16px; border:2px solid var(--color-cream); border-radius:6px; font-family:'Montserrat',sans-serif; font-size:0.9rem; width:100%; box-sizing:border-box; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--color-brown)'" onblur="this.style.borderColor='var(--color-cream)'">
+
+            <!-- Campo de dirección y CP (solo visible si elige envío) -->
             <div id="campo-direccion-container" style="display: none;">
                 <label style="display: block; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--color-taupe); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Dirección de envío</label>
-                <textarea id="campo-direccion" placeholder="Calle, número, localidad, provincia..." style="padding:14px 16px; border:2px solid var(--color-cream); border-radius:4px; font-family:'Montserrat',sans-serif; font-size:0.9rem; width:100%; box-sizing:border-box; min-height: 80px; resize: vertical;"></textarea>
+                <textarea id="campo-direccion" placeholder="Calle, número, localidad, provincia..." style="padding:14px 16px; border:2px solid var(--color-cream); border-radius:6px; font-family:'Montserrat',sans-serif; font-size:0.9rem; width:100%; box-sizing:border-box; min-height: 80px; resize: vertical; margin-bottom: 12px; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--color-brown)'" onblur="this.style.borderColor='var(--color-cream)'"></textarea>
+                
+                <label style="display: block; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--color-taupe); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Código Postal</label>
+                <input id="campo-cp" type="text" placeholder="Ej: 1419" style="padding:14px 16px; border:2px solid var(--color-cream); border-radius:6px; font-family:'Montserrat',sans-serif; font-size:0.9rem; width:100%; box-sizing:border-box; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--color-brown)'" onblur="this.style.borderColor='var(--color-cream)'">
+            </div>
+
+            <!-- Selección de Método de Pago -->
+            <div style="margin-top:2px;">
+                <p style="font-size:0.78rem; color:var(--color-taupe); text-transform:uppercase; letter-spacing:1px; margin:0 0 10px 0; font-weight:600;">Método de Pago</p>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <label id="metodo-mercadopago" class="metodo-pago-card metodo-pago-activo" onclick="seleccionarMetodoPago('mercadopago')">
+                        <input type="radio" id="radio-mercadopago" name="metodo_pago" value="mercadopago" checked>
+                        <div style="flex:1;">
+                            <div style="font-weight:700; font-size:0.9rem; color:var(--color-slate);">&#x1F4B3; Tarjetas</div>
+                            <div style="font-size:0.75rem; color:var(--color-taupe); margin-top:2px;">Crédito, Débito o Dinero en cuenta</div>
+                        </div>
+                    </label>
+                    <label id="metodo-transferencia" class="metodo-pago-card" onclick="seleccionarMetodoPago('transferencia')">
+                        <input type="radio" id="radio-transferencia" name="metodo_pago" value="transferencia">
+                        <div style="flex:1;">
+                            <div style="font-weight:700; font-size:0.9rem; color:var(--color-slate);">&#x1F504; Transferencia Directa</div>
+                            <div style="font-size:0.75rem; color:var(--color-taupe); margin-top:2px;">Mediante alias &middot; Acreditación inmediata</div>
+                        </div>
+                        <span class="metodo-badge-off">10% OFF</span>
+                    </label>
+                    <label id="metodo-efectivo" class="metodo-pago-card" onclick="seleccionarMetodoPago('efectivo')">
+                        <input type="radio" id="radio-efectivo" name="metodo_pago" value="efectivo">
+                        <div style="flex:1;">
+                            <div style="font-weight:700; font-size:0.9rem; color:var(--color-slate);">&#x1F4B5; Efectivo al Retirar</div>
+                            <div style="font-size:0.75rem; color:var(--color-taupe); margin-top:2px;">Solo disponible para Retiro</div>
+                        </div>
+                        <span class="metodo-badge-off">10% OFF</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Resumen de Precio -->
+            <div style="background:var(--color-offwhite); border-radius:8px; padding:14px 16px; margin-top:2px;">
+                <div class="resumen-precio-row">
+                    <span>Subtotal</span>
+                    <span id="resumen-subtotal">$ {{ "{:,.0f}".format(total).replace(',', '.') }}</span>
+                </div>
+                <div class="resumen-precio-row descuento-row" id="resumen-descuento-row" style="display:none;">
+                    <span>&#x1F389; 10% OFF</span>
+                    <span id="resumen-descuento"></span>
+                </div>
+                <div class="resumen-precio-row" id="resumen-envio-row" style="display:none; font-style:italic;">
+                    <span>&#x1F4E6; Envío</span>
+                    <span style="color:var(--color-sage);">~ a coordinar</span>
+                </div>
+                <div class="resumen-precio-row total-row">
+                    <span>TOTAL A PAGAR</span>
+                    <span id="resumen-total">$ {{ "{:,.0f}".format(total).replace(',', '.') }}</span>
+                </div>
             </div>
         </div>
 
-        <p id="modal-error" style="display:none; color:#a85454; font-size:0.82rem; margin-top:12px;">Por favor completá todos los campos.</p>
-
-        <button onclick="confirmarYPagar()" style="margin-top:24px; width:100%; padding:18px; background:var(--color-brown); color:#fff; border:none; border-radius:4px; font-family:'Montserrat',sans-serif; font-weight:600; font-size:0.9rem; letter-spacing:1.5px; cursor:pointer; transition:background 0.3s;">CONTINUAR CON EL PAGO</button>
-        <p style="text-align:center; margin-top:12px; font-size:0.75rem; color:var(--color-sage);"><i class="fa-solid fa-lock" style="margin-right:4px;"></i>Pago seguro y protegido</p>
+        <!-- Footer fijo: error + botón -->
+        <div style="padding:0 28px 24px 28px; flex-shrink:0;">
+            <p id="modal-error" style="display:none; color:#a85454; font-size:0.82rem; margin:0 0 10px 0;">Por favor completá todos los campos.</p>
+            <button id="btn-confirmar-pago" onclick="confirmarYPagar()" data-es-m-p="1" style="width:100%; padding:18px; background:var(--color-brown); color:#fff; border:none; border-radius:6px; font-family:'Montserrat',sans-serif; font-weight:700; font-size:0.88rem; letter-spacing:1.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; overflow:hidden;">
+                <span id="btn-pago-icono"><i class="fa-brands fa-cc-mastercard"></i></span>
+                <span id="btn-pago-texto">CONFIRMAR PEDIDO</span>
+            </button>
+            <p style="text-align:center; margin:10px 0 0 0; font-size:0.75rem; color:var(--color-sage);"><i class="fa-solid fa-lock" style="margin-right:4px;"></i>Tus datos están protegidos</p>
+        </div>
     </div>
 </div>
 {% endblock %}

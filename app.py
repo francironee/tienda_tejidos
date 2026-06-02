@@ -323,7 +323,9 @@ def guardar_datos_cliente():
         'nombre': data.get('nombre', ''),
         'celular': data.get('celular', ''),
         'email': data.get('email', ''),
-        'direccion': data.get('direccion', '')
+        'direccion': data.get('direccion', ''),
+        'cp': data.get('cp', ''),
+        'metodo_pago': data.get('metodo_pago', 'mercadopago')
     }
     session.modified = True
     return {'ok': True}
@@ -345,7 +347,15 @@ def checkout_mp():
     if 'carrito' not in session or not session['carrito']:
         flash('Tu carrito está vacío.', 'error')
         return redirect(url_for('carrito'))
-        
+
+    datos_cliente = session.get('datos_cliente', {})
+    metodo_pago = datos_cliente.get('metodo_pago', 'mercadopago')
+
+    # Flujo alternativo: Transferencia o Efectivo
+    if metodo_pago in ('transferencia', 'efectivo'):
+        return checkout_alternativo(metodo_pago)
+
+    # Flujo Mercado Pago
     items = []
     for nombre, item_data in session['carrito'].items():
         items.append({
@@ -383,41 +393,200 @@ def checkout_mp():
         flash(f'Error al conectar con Mercado Pago. Verifica tus credenciales.', 'error')
         return redirect(url_for('carrito'))
 
-def enviar_correos_venta(comprador_email, comprador_nombre, items_str, total, datos_cliente=None):
+
+def checkout_alternativo(metodo_pago):
+    """Procesa un pedido pagado por Transferencia o Efectivo con 10% de descuento."""
+    DESCUENTO_PORCENTAJE = 0.10
+
+    carrito = session.get('carrito', {})
+    datos_cliente = session.get('datos_cliente', {})
+    envio_info = session.get('envio', {})
+
+    # Generar ID único corto para el pedido
+    pedido_id = uuid.uuid4().hex[:6].upper()
+
+    subtotal = sum(item['precio'] * item['qty'] for item in carrito.values())
+    costo_envio = float(envio_info.get('costo', 0))
+    descuento = round(subtotal * DESCUENTO_PORCENTAJE)
+    total = subtotal - descuento + costo_envio
+
+    # Construir texto de items para el correo
+    items_list = []
+    for nombre, item_data in carrito.items():
+        items_list.append(f"{item_data['qty']}x {nombre}")
+    items_str = "<br>".join(items_list)
+
+    comprador_email = datos_cliente.get('email', '')
+    comprador_nombre = datos_cliente.get('nombre', 'Cliente')
+
+    if comprador_email:
+        enviar_correos_venta(
+            comprador_email=comprador_email,
+            comprador_nombre=comprador_nombre,
+            items_str=items_str,
+            subtotal=subtotal,
+            descuento=descuento,
+            total=total,
+            costo_envio=costo_envio,
+            datos_cliente=datos_cliente,
+            metodo_pago=metodo_pago,
+            pedido_id=pedido_id
+        )
+
+    # Guardar datos del pedido confirmado en sesión para mostrarlo en la página
+    session['pedido_confirmado'] = {
+        'pedido_id': pedido_id,
+        'nombre': comprador_nombre,
+        'celular': datos_cliente.get('celular', ''),
+        'email': comprador_email,
+        'productos': [{"descripcion": nombre, "qty": data['qty'], "precio": data['precio']} for nombre, data in carrito.items()],
+        'subtotal': subtotal,
+        'descuento': descuento,
+        'costo_envio': costo_envio,
+        'total': total,
+        'metodo_pago': metodo_pago,
+        'tipo_envio': envio_info.get('tipo', 'retiro')
+    }
+
+    # Limpiar carrito y datos temporales
+    session.pop('carrito', None)
+    session.pop('datos_cliente', None)
+    session.modified = True
+
+    return redirect(url_for('pedido_confirmado'))
+
+
+@app.route('/pedido_confirmado')
+def pedido_confirmado():
+    pedido = session.get('pedido_confirmado')
+    if not pedido:
+        return redirect(url_for('inicio'))
+    # Limpiar de sesión después de renderizar
+    session.pop('pedido_confirmado', None)
+    session.modified = True
+    return render_template('pedido_confirmado.html', pedido=pedido)
+
+
+def enviar_correos_venta(comprador_email, comprador_nombre, items_str, total=None,
+                         datos_cliente=None, metodo_pago='mercadopago',
+                         subtotal=None, descuento=None, costo_envio=0, pedido_id=None):
     remitente_email = "somostejidosmargot@gmail.com"
-    # IMPORTANT: Reemplaza esto con tu contraseña de aplicación de Gmail (16 letras sin espacios)
-    remitente_pass = "zrgu bcxr rkdh kqok" 
+    remitente_pass = "zrgu bcxr rkdh kqok"
     
     if remitente_pass == "TU_CONTRASEÑA_DE_APLICACION_AQUI":
         print("Aviso: No se enviaron correos porque no se configuró la contraseña de aplicación.")
         return
 
+    # ID del pedido para referencia interna
+    pid = pedido_id or 'N/A'
+
+    # Nombres legibles de cada método de pago
+    metodo_nombres = {
+        'mercadopago': 'Mercado Pago',
+        'transferencia': 'Transferencia Bancaria (10% OFF)',
+        'efectivo': 'Efectivo al retirar (10% OFF)'
+    }
+    metodo_label = metodo_nombres.get(metodo_pago, 'Mercado Pago')
+
+    # Formatear monto
+    def fmt(n):
+        return '{:,.0f}'.format(n).replace(',', '.')
+
+    # --- Bloque de resumen de precios ---
+    if subtotal is not None and descuento is not None:
+        total_display = total or (subtotal - descuento + costo_envio)
+        precio_html = f"""
+        <table style="width:100%; font-family: Arial, sans-serif; font-size: 0.95rem; border-collapse: collapse;">
+            <tr><td style="padding:6px 0; color:#555;">Subtotal</td><td style="text-align:right;">$ {fmt(subtotal)}</td></tr>
+            <tr><td style="padding:6px 0; color:#4CAF50; font-weight:600;">10% OFF</td><td style="text-align:right; color:#4CAF50; font-weight:600;">- $ {fmt(descuento)}</td></tr>
+            {'<tr><td style="padding:6px 0; color:#555;">Envío</td><td style="text-align:right;">$ ' + fmt(costo_envio) + '</td></tr>' if costo_envio > 0 else ''}
+            <tr style="border-top: 2px solid #E8D9CD;"><td style="padding:10px 0; font-weight:700; color:#523D35; font-size:1.1rem;">TOTAL</td><td style="text-align:right; font-weight:700; color:#523D35; font-size:1.1rem;">$ {fmt(total_display)}</td></tr>
+        </table>
+        """
+        total_str = fmt(total_display)
+    else:
+        total_display = total or 0
+        precio_html = f"<p><strong>Total:</strong> $ {fmt(total_display)}</p>"
+        total_str = fmt(total_display)
+
+    # --- Instrucciones de pago para el cliente ---
+    if metodo_pago == 'transferencia':
+        instrucciones_pago = f"""
+        <div style="background-color: #f0f8f0; border-left: 4px solid #4CAF50; border-radius: 4px; padding: 20px; margin: 20px 0;">
+            <h3 style="margin: 0 0 12px 0; color: #2e7d32; font-size: 1rem;">Pasos para completar tu pago:</h3>
+            <p style="margin: 0 0 8px 0;">Tenes que realizar una transferencia al siguiente alias:</p>
+            <p style="font-size: 1.3rem; font-weight: 700; color: #523D35; background: #fff; padding: 10px 16px; border-radius: 4px; display: inline-block; letter-spacing: 1px;">tejidos.margot<span></span>.mp</p>
+            <p style="margin: 12px 0 0 0; font-size: 0.9rem; color: #555;">Una vez realizada la transferencia, envianos el comprobante por WhatsApp al <strong>+54 11 2519-3017</strong> junto con tu nombre completo.</p>
+            <p style="margin: 8px 0 0 0; font-size: 0.9rem; color: #555;"><strong>Total a transferir: $ {total_str}</strong></p>
+        </div>
+        """
+    elif metodo_pago == 'efectivo':
+        instrucciones_pago = f"""
+        <div style="background-color: #fff8e1; border-left: 4px solid #FFC107; border-radius: 4px; padding: 20px; margin: 20px 0;">
+            <h3 style="margin: 0 0 12px 0; color: #e65100; font-size: 1rem;">Pasos para completar tu pago en Efectivo</h3>
+            <p style="margin: 0 0 8px 0;">Tendrás que abonar en efectivo al momento de retirar tu pedido en nuestro showroom en <strong>Villa Pueyrredón, CABA</strong>.</p>
+            <p style="margin: 8px 0 0 0; font-size: 0.9rem; color: #555;">Te contactaremos por WhatsApp para enviarte la dirección exacta y coordinar día y horario de retiro.</p>
+            <p style="margin: 8px 0 0 0; font-size: 0.9rem; color: #555;"><strong>Total a abonar al retirar: $ {total_str}</strong></p>
+        </div>
+        """
+    else:
+        instrucciones_pago = ""
+
+    # Footer de redes sociales para el cliente
+    social_footer = """
+        <div style="text-align:center; margin-top:30px; padding-top:20px; border-top:1px solid #E8D9CD;">
+            <p style="font-family:'Helvetica Neue',Arial,sans-serif; font-size:0.8rem; color:#959D90; margin:0 0 14px 0; letter-spacing:1px; text-transform:uppercase;">Seguinos en nuestras redes</p>
+            <table align="center" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+                <tr>
+                    <td style="padding:0 8px;">
+                        <a href="https://instagram.com/tejidosmargot" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#E1306C; color:#fff; padding:8px 16px; border-radius:20px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:0.82rem; font-weight:600;">
+                            Instagram
+                        </a>
+                    </td>
+                    <td style="padding:0 8px;">
+                        <a href="https://www.tiktok.com/@tejidos.margot" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#010101; color:#fff; padding:8px 16px; border-radius:20px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:0.82rem; font-weight:600;">
+                            TikTok
+                        </a>
+                    </td>
+                    <td style="padding:0 8px;">
+                        <a href="https://wa.me/5491125193017" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#25D366; color:#fff; padding:8px 16px; border-radius:20px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:0.82rem; font-weight:600;">
+                            WhatsApp
+                        </a>
+                    </td>
+                </tr>
+            </table>
+            <p style="font-family:'Helvetica Neue',Arial,sans-serif; font-size:0.75rem; color:#BBA58F; margin:14px 0 0 0;">@tejidosmargot &nbsp;|&nbsp; @tejidos.margot &nbsp;|&nbsp; +54 11 2519-3017</p>
+        </div>
+    """
+
     # --- 1. Correo al comprador ---
     msg_cliente = MIMEMultipart()
     msg_cliente['From'] = formataddr(('Tejidos Margot', remitente_email))
     msg_cliente['To'] = comprador_email
-    msg_cliente['Subject'] = "¡Gracias por tu compra en Margot! 🧶"
+    msg_cliente['Subject'] = f"¡Tu pedido Margot #{pid} está confirmado! 🧶"
     
     body_cliente = f"""
     <html>
     <body style="font-family: 'Helvetica Neue', Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #523D35; font-size: 24px;">¡Hola {comprador_nombre}!</h1>
+            <h1 style="color: #523D35; font-size: 24px;">¡Gracias {comprador_nombre}!</h1>
         </div>
-        <p>Tu pago ha sido procesado con éxito. Queremos agradecerte enormemente por elegir lo artesanal y confiar en nuestras manos.</p>
+        <p>{'Tu pago ha sido procesado con éxito.' if metodo_pago == 'mercadopago' else 'Tu pedido ha sido confirmado. ¡Gracias por elegirnos y confiar en nuestras manos!'}.</p>
         
         <div style="background-color: #EFEFE9; padding: 20px; border-radius: 5px; margin: 25px 0;">
             <h3 style="margin-top: 0; color: #523D35;">Detalle de tu compra:</h3>
             <p style="margin-bottom: 15px;">{items_str}</p>
             <hr style="border: none; border-top: 1px solid #ddd; margin: 15px 0;">
-            <p style="margin: 0;"><strong>Total pagado:</strong> ${total}</p>
+            {precio_html}
         </div>
         
-        <p>En breve <strong>nos pondremos en contacto contigo por WhatsApp</strong> (al número que dejaste en Mercado Pago) para coordinar el envío o indicarte la dirección exacta para el retiro por nuestro showroom en Villa Pueyrredón.</p>
+        {instrucciones_pago}
+        
+        <p>{'En breve <strong>nos pondremos en contacto contigo por WhatsApp</strong> para coordinar el envío o indicarte la dirección exacta para el retiro por nuestro showroom en Villa Pueyrredón.' if metodo_pago == 'mercadopago' else ''}</p>
         
         <br>
-        <p>¡Gracias por ser parte de la familia Margot!</p>
-        <p style="color: #959D90;"><i>Con cariño,<br>El equipo de Tejidos Margot</i></p>
+        <p style="color: #959D90;"><i>Gracias por ser parte de la familia Margot, con cariño<br>El equipo de Tejidos Margot <3</i></p>
+        {social_footer}
     </body>
     </html>
     """
@@ -425,17 +594,18 @@ def enviar_correos_venta(comprador_email, comprador_nombre, items_str, total, da
     
     # --- 2. Correo a Margot (Administradora) ---
     msg_admin = MIMEMultipart()
-    msg_admin['From'] = formataddr(('Bot de Ventas Margot', remitente_email))
+    msg_admin['From'] = formataddr(('Bot de Ventas', remitente_email))
     msg_admin['To'] = remitente_email
-    msg_admin['Subject'] = f"💰 ¡NUEVA VENTA! - {comprador_nombre}"
+    msg_admin['Subject'] = f"💰 Nueva venta - #{pid}"
     
     datos_extra = ""
     if datos_cliente:
         direccion = datos_cliente.get('direccion', '')
-        direccion_html = f'<li>Dirección: {direccion}</li>' if direccion else '<li>Método: Retiro en showroom</li>'
+        cp = datos_cliente.get('cp', '')
+        direccion_html = f'<li>Dirección de envío: {direccion} (CP: {cp})</li>' if direccion else '<li>Entrega: Retiro en showroom</li>'
         datos_extra = f"""
         <div style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 5px; padding: 15px; margin: 15px 0;">
-            <p style="margin: 0 0 8px 0;"><strong>📋 Datos ingresados por el cliente:</strong></p>
+            <p style="margin: 0 0 8px 0;"><strong>Datos del cliente:</strong></p>
             <ul style="margin: 0; padding-left: 20px;">
                 <li>Nombre: {datos_cliente.get('nombre', 'No especificado')}</li>
                 <li>Celular: {datos_cliente.get('celular', 'No especificado')}</li>
@@ -444,22 +614,25 @@ def enviar_correos_venta(comprador_email, comprador_nombre, items_str, total, da
             </ul>
         </div>
         """
-    
+
+    metodo_color = '#4CAF50' if metodo_pago == 'transferencia' else ('#FF8C00' if metodo_pago == 'efectivo' else '#2196F3')
+    metodo_icono = 'Transferencia' if metodo_pago == 'transferencia' else ('Efectivo' if metodo_pago == 'efectivo' else 'Mercado Pago')
+
     body_admin = f"""
     <html>
     <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-        <h2 style="color: #4CAF50;">¡Tus manos mágicas lo hicieron de nuevo! Nueva venta registrada.</h2>
-        <p><strong>Datos del Cliente (Mercado Pago):</strong></p>
-        <ul>
-            <li>Nombre: {comprador_nombre}</li>
-            <li>Email: {comprador_email}</li>
-        </ul>
+        <p style="font-size:0.75rem; color:#999; margin:0 0 4px 0;">Pedido #{pid}</p>
+        <div style="background: {metodo_color}22; border: 2px solid {metodo_color}; border-radius: 8px; padding: 10px 16px; margin: 0 0 16px 0; display:inline-block;">
+            <strong style="color: {metodo_color};">Método de pago: {metodo_icono}</strong>
+        </div>
         {datos_extra}
-        <p><strong>Detalle de los tejidos comprados:</strong></p>
+        <p><strong>Detalles del pedido:</strong></p>
         <p>{items_str}</p>
-        <p><strong>Total Cobrado:</strong> ${total}</p>
+        {precio_html}
         <hr>
-        <p>👉 <em>Ve a tu panel de Mercado Pago para ver el número de teléfono de {comprador_nombre} y contactarle por WhatsApp.</em></p>
+        {'<p style="margin-top: 15px; font-weight: bold; color: #2e7d32;">Ya se le enviaron las instrucciones de pago al cliente. Aguardá a que te llegue el comprobante por WhatsApp antes de preparar el pedido.</p>' if metodo_pago == 'transferencia' else ''}
+        {'<p><em>El cliente abonará en efectivo al retirar. Coordiná día y horario por WhatsApp.</em></p>' if metodo_pago == 'efectivo' else ''}
+        {'<p><em>Registrá el número de ' + comprador_nombre + ' y contactate por WhatsApp para coordinar el retiro o envío.</em></p>' if metodo_pago == 'mercadopago' else ''}
     </body>
     </html>
     """
@@ -475,6 +648,7 @@ def enviar_correos_venta(comprador_email, comprador_nombre, items_str, total, da
         print("Correos enviados exitosamente.")
     except Exception as e:
         print(f"Error al enviar correos: {e}")
+
 
 @app.route('/pago_exitoso')
 def pago_exitoso():
@@ -497,7 +671,7 @@ def pago_exitoso():
                 
                 items_comprados = []
                 for item in pago.get("additional_info", {}).get("items", []):
-                    items_comprados.append(f"{item.get('quantity')}x {item.get('title')} (${item.get('unit_price')})")
+                    items_comprados.append(f"{item.get('quantity')}x {item.get('title')}")
                 
                 items_str = "<br>".join(items_comprados)
                 
@@ -505,7 +679,14 @@ def pago_exitoso():
                 datos_cliente = session.get('datos_cliente', {})
                 
                 if comprador_email:
-                    enviar_correos_venta(comprador_email, comprador_nombre, items_str, total, datos_cliente)
+                    enviar_correos_venta(
+                        comprador_email=comprador_email,
+                        comprador_nombre=comprador_nombre,
+                        items_str=items_str,
+                        total=total,
+                        datos_cliente=datos_cliente,
+                        metodo_pago='mercadopago'
+                    )
         except Exception as e:
             print(f"Error procesando pago exitoso: {e}")
 

@@ -28,7 +28,7 @@
 
     <!-- Favicon Actualizado -->
     <link rel="icon" type="image/jpg" href="{{ url_for('static', filename='favicon.jpg') }}">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.jpg') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -87,7 +87,7 @@
     <footer>
         <div class="footer-container">
             <div class="footer-links">
-                <a href="https://wa.me/5491125193017?text=Hola%2C%20quiero%20hacer%20un%20pedido%20personalizado%20%28dise%C3%B1o%2C%20medidas%20y%20colores%29." target="_blank" rel="noopener noreferrer">PEDIDO PERSONALIZADO</a>
+                <a href="https://wa.me/5491125193017?text=Hola%2C%20me%20gustaría%20hacer%20un%20pedido%20personalizado." target="_blank" rel="noopener noreferrer">PEDIDO PERSONALIZADO</a>
                 <a href="{{ url_for('inicio') }}#faq">PREGUNTAS FRECUENTES</a>
                 <a href="{{ url_for('inicio') }}#contacto">CONTACTO</a>
             </div>
@@ -166,7 +166,7 @@
             if (!bar) return;
             bar.style.opacity = '1';
             bar.style.width = '0%';
-            
+
             clearInterval(progressInterval);
             let progress = 0;
             progressInterval = setInterval(() => {
@@ -190,10 +190,10 @@
 
         function loadPageSPA(url, pushToHistory = true) {
             showProgressBar();
-            
+
             const urlObj = new URL(url, window.location.origin);
             const hash = urlObj.hash;
-            
+
             fetch(url)
             .then(response => {
                 if (!response.ok) throw new Error('Network response error');
@@ -202,16 +202,16 @@
             .then(html => {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
-                
+
                 // Swap Title
                 document.title = doc.title;
-                
+
                 // Swap Content
                 const newMain = doc.querySelector('main');
                 const oldMain = document.querySelector('main');
                 if (newMain && oldMain) {
                     oldMain.innerHTML = newMain.innerHTML;
-                    
+
                     // Extraer y ejecutar scripts dinámicamente en el documento activo
                     const scripts = newMain.querySelectorAll('script');
                     scripts.forEach(script => {
@@ -223,12 +223,12 @@
                         newScript.remove();
                     });
                 }
-                
+
                 // History Push
                 if (pushToHistory) {
                     history.pushState({ url: url }, doc.title, url);
                 }
-                
+
                 // Re-inicializar componentes globales
                 reinitializeSPAComponents();
 
@@ -281,22 +281,22 @@
         document.body.addEventListener('click', function(e) {
             const anchor = e.target.closest('a');
             if (!anchor) return;
-            
+
             // Ignorar enlaces externos, descargas, o target _blank
             if (anchor.target === '_blank' || anchor.hasAttribute('download')) return;
-            
+
             const href = anchor.getAttribute('href');
             if (!href) return;
-            
+
             // Ignorar rutas especiales de pasarelas de pago, logout, estáticos o detalles de productos
             if (href.includes('/checkout') || href.includes('mercadopago') || href.includes('logout') || href.startsWith('/static/') || href.includes('/producto/')) {
                 return;
             }
-            
+
             // Validar origen
             const url = new URL(anchor.href, window.location.origin);
             if (url.origin !== window.location.origin) return;
-            
+
             // Cerrar menú hamburguesa si está abierto
             const hamburgerBtn = document.getElementById('hamburger-btn');
             const mobileNav = document.getElementById('mobile-nav');
@@ -306,7 +306,7 @@
                     mobileNav.classList.remove('mobile-open');
                 }
             };
-            
+
             // Enlaces con hash (anclas locales)
             if (url.hash) {
                 const targetPath = url.pathname;
@@ -314,7 +314,7 @@
                 if (targetPath === currentPath) {
                     e.preventDefault();
                     closeHamburger();
-                    
+
                     const targetElement = document.querySelector(url.hash);
                     if (targetElement) {
                         lenis.scrollTo(targetElement, { duration: 1.2, offset: -90 });
@@ -323,10 +323,10 @@
                     return;
                 }
             }
-            
+
             e.preventDefault();
             closeHamburger();
-            
+
             loadPageSPA(anchor.href);
         });
 
@@ -348,7 +348,7 @@
                     this.classList.toggle('open');
                     mobileNav.classList.toggle('mobile-open');
                 });
-                
+
                 // Cerrar si se toca fuera del header
                 document.addEventListener('click', function (e) {
                     if (!e.target.closest('header')) {
