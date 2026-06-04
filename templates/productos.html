@@ -58,6 +58,13 @@
     </div>
 </section>
 
+<!-- Barra de Anuncios Minimalista -->
+<div class="announcement-bar">
+    <div class="announcement-item active">10% OFF con transferencia o efectivo</div>
+    <div class="announcement-item">Retiro gratis en showroom</div>
+    <div class="announcement-item">Envío gratis pasando los $350.000</div>
+</div>
+
 <script>
     (function() {
         const grid = document.getElementById("productos-grid");
@@ -124,5 +131,37 @@
             });
         }
     })();
+</script>
+
+<script>
+(function() {
+    // Limpiar intervalo previo de anuncios si existe para evitar duplicación
+    if (window.announcementInterval) {
+        clearInterval(window.announcementInterval);
+    }
+    
+    let announceIndex = 0;
+    const items = document.querySelectorAll('.announcement-item');
+    
+    if (items.length > 0) {
+        items.forEach((item, idx) => {
+            if (idx === 0) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+        
+        window.announcementInterval = setInterval(() => {
+            if (items[announceIndex]) {
+                items[announceIndex].classList.remove('active');
+            }
+            announceIndex = (announceIndex + 1) % items.length;
+            if (items[announceIndex]) {
+                items[announceIndex].classList.add('active');
+            }
+        }, 4000);
+    }
+})();
 </script>
 {% endblock %}
