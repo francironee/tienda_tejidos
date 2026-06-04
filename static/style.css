@@ -1253,9 +1253,9 @@ footer {
 
 /* Related Products */
 .related-products-section {
-    padding: 4rem 2rem;
+    padding: 3rem 2rem 5rem 2rem;
     border-top: 1px solid var(--color-cream);
-    margin-top: 40px;
+    margin-top: 50px;
 }
 
 .related-products-title {
@@ -1268,9 +1268,9 @@ footer {
 
 .related-catalogo {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 20px;
-    max-width: 780px; /* Limitar el ancho máximo para hacer las tarjetas más pequeñas y estéticas en PC */
+    max-width: 1200px;
     margin: 0 auto;
 }
 
@@ -1315,9 +1315,12 @@ footer {
         gap: 25px;
     }
     .related-catalogo {
-        grid-template-columns: repeat(2, 1fr);
-        max-width: 500px;
+        grid-template-columns: repeat(4, 1fr);
+        max-width: 100%;
         margin: 0 auto;
+    }
+    .related-catalogo a:nth-child(n+5) {
+        display: none;
     }
     #destacados .producto:nth-child(n+4) {
         display: none;
@@ -1325,9 +1328,7 @@ footer {
 }
 
 @media (max-width: 500px) {
-    .related-catalogo {
-        grid-template-columns: repeat(1, 1fr);
-    }
+    /* related products grid handled in mobile media query */
 }
 
 /* Cart UI */
@@ -2016,10 +2017,14 @@ footer {
     }
 
     .related-catalogo {
-        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-columns: repeat(3, 1fr) !important;
         gap: 12px;
-        max-width: 420px;
+        max-width: 100%;
         margin: 0 auto;
+    }
+    
+    .related-catalogo a:nth-child(n+4) {
+        display: none;
     }
 
     .related-producto-img {

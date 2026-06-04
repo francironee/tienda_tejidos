@@ -368,7 +368,7 @@ def producto_detalle(nombre):
         return "Producto no encontrado", 404
         
     # Obtener productos relacionados aleatorios (no solo de la misma categoría)
-    relacionados = Producto.query.filter(Producto.id != producto.id, Producto.oculto == False).order_by(db.func.random()).limit(4).all()
+    relacionados = Producto.query.filter(Producto.id != producto.id, Producto.oculto == False).order_by(db.func.random()).limit(5).all()
     
     return render_template('producto.html', item=producto, categoria=producto.categoria_rel.nombre, relacionados=relacionados)
 
