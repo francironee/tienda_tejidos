@@ -78,6 +78,31 @@ class ImagenSecundaria(db.Model):
     producto_id = db.Column(db.Integer, db.ForeignKey('producto.id'), nullable=False)
     producto = db.relationship('Producto', backref=db.backref('imagenes_extra', lazy=True, cascade="all, delete-orphan", order_by='ImagenSecundaria.orden'))
 
+class Suscriptor(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    fecha_registro = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+class TarifaEnvio(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    zona = db.Column(db.String(100), unique=True, nullable=False)
+    costo = db.Column(db.Float, nullable=False, default=0.0)
+
+def suscribir_cliente(email, nombre):
+    if not email:
+        return
+    try:
+        # Check case-insensitive duplicate
+        existente = Suscriptor.query.filter(Suscriptor.email.ilike(email)).first()
+        if not existente:
+            nuevo = Suscriptor(email=email, nombre=nombre)
+            db.session.add(nuevo)
+            db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al suscribir cliente: {e}")
+
 CATALOGO_INICIAL = {
     "Sweaters": [
         {"nombre": "Amore", "precio": 200000, "stock": 3, "colores": "Dulce de leche, Crudo, Gris claro, Violeta", "img": "amore.jpg", "desc": "Detalles románticos con un calce holgado ideal para media estación.", "materiales": "100% hilo de algodón hipoalergénico. Lavar a mano con agua fría."},
@@ -143,6 +168,17 @@ def init_db():
                 pass
         
         db.create_all()
+        if not TarifaEnvio.query.first():
+            tarifas_iniciales = [
+                TarifaEnvio(zona='CABA Estándar', costo=4500.0),
+                TarifaEnvio(zona='Buenos Aires / GBA', costo=6500.0),
+                TarifaEnvio(zona='Nacional (Resto del país)', costo=8500.0)
+            ]
+            for t in tarifas_iniciales:
+                db.session.add(t)
+            db.session.commit()
+            print("Tarifas de envío inicializadas.")
+
         if not Categoria.query.first():
             for cat_nombre, productos in CATALOGO_INICIAL.items():
                 categoria = Categoria(nombre=cat_nombre)
@@ -203,7 +239,8 @@ def carrito():
                 'img': data['img'],
                 'subtotal': subtotal
             })
-    return render_template('carrito.html', items_carrito=items_carrito, total=total)
+    tarifas = {t.zona: t.costo for t in TarifaEnvio.query.all()}
+    return render_template('carrito.html', items_carrito=items_carrito, total=total, tarifas=tarifas)
 
 @app.route('/add_to_cart/<nombre>', methods=['POST'])
 def add_to_cart(nombre):
@@ -342,6 +379,37 @@ def guardar_envio():
     session.modified = True
     return {'ok': True}
 
+def calcular_costo_envio_backend(cp_raw, tipo_envio):
+    if tipo_envio != 'envio' or not cp_raw:
+        return 0.0, 'Retiro showroom'
+    
+    cp = cp_raw.strip().upper()
+    import re
+    match = re.search(r'\d{4}', cp)
+    cp_num = int(match.group(0)) if match else None
+    
+    # 1. Cercanía (Showroom)
+    cercania_cps = {1417, 1419, 1431, 1425, 1430, 1416, 1407}
+    if cp_num and cp_num in cercania_cps:
+        return 0.0, 'Envío Gratis por Cercanía (Showroom)'
+    
+    # Obtener tarifas de la base de datos
+    tarifas = {t.zona: t.costo for t in TarifaEnvio.query.all()}
+    caba_costo = tarifas.get('CABA Estándar', 4500.0)
+    gba_costo = tarifas.get('Buenos Aires / GBA', 6500.0)
+    nacional_costo = tarifas.get('Nacional (Resto del país)', 8500.0)
+    
+    # 2. CABA Estándar
+    if cp.startswith('C') or (cp_num and 1000 <= cp_num <= 1499):
+        return caba_costo, 'CABA Estándar'
+    
+    # 3. Buenos Aires / GBA
+    if cp.startswith('B') or (cp_num and (1600 <= cp_num <= 1999 or 6000 <= cp_num <= 8999)):
+        return gba_costo, 'Buenos Aires / GBA'
+    
+    # 4. Nacional
+    return nacional_costo, 'Nacional (Resto del país)'
+
 @app.route('/checkout', methods=['POST'])
 def checkout_mp():
     if 'carrito' not in session or not session['carrito']:
@@ -365,12 +433,14 @@ def checkout_mp():
             "currency_id": "ARS"
         })
     
-    # Agregar costo de envío si existe
+    # Calcular costo de envío de forma segura en backend
     envio_info = session.get('envio', {})
-    costo_envio = float(envio_info.get('costo', 0))
-    if costo_envio > 0:
+    tipo_envio = envio_info.get('tipo', 'retiro')
+    costo_envio, zona_envio = calcular_costo_envio_backend(datos_cliente.get('cp'), tipo_envio)
+    
+    if costo_envio > 0 or tipo_envio == 'envio':
         items.append({
-            "title": f"Envío - {envio_info.get('zona', 'A domicilio')}",
+            "title": f"Envío - {zona_envio}",
             "quantity": 1,
             "unit_price": costo_envio,
             "currency_id": "ARS"
@@ -392,7 +462,8 @@ def checkout_mp():
         'costo_envio': costo_envio,
         'total': total,
         'metodo_pago': 'mercadopago',
-        'tipo_envio': envio_info.get('tipo', 'retiro')
+        'tipo_envio': tipo_envio,
+        'zona_envio': zona_envio
     }
     session.modified = True
         
@@ -429,9 +500,25 @@ def checkout_alternativo(metodo_pago):
     pedido_id = uuid.uuid4().hex[:6].upper()
 
     subtotal = sum(item['precio'] * item['qty'] for item in carrito.values())
-    costo_envio = float(envio_info.get('costo', 0))
+    
+    # Calcular costo de envío de forma segura en backend
+    tipo_envio = envio_info.get('tipo', 'retiro')
+    costo_envio, zona_envio = calcular_costo_envio_backend(datos_cliente.get('cp'), tipo_envio)
+    
     descuento = round(subtotal * DESCUENTO_PORCENTAJE)
     total = subtotal - descuento + costo_envio
+
+    # Descontar stock
+    for key, item_data in carrito.items():
+        nombre_base = item_data.get('nombre_base', key)
+        qty = int(item_data.get('qty', 1))
+        prod = Producto.query.filter(Producto.nombre.ilike(nombre_base)).first()
+        if not prod and ' - ' in nombre_base:
+            nombre_sin_color = nombre_base.split(' - ')[0]
+            prod = Producto.query.filter(Producto.nombre.ilike(nombre_sin_color)).first()
+        if prod:
+            prod.stock = max(0, prod.stock - qty)
+    db.session.commit()
 
     # Construir texto de items para el correo
     items_list = []
@@ -468,7 +555,8 @@ def checkout_alternativo(metodo_pago):
         'costo_envio': costo_envio,
         'total': total,
         'metodo_pago': metodo_pago,
-        'tipo_envio': envio_info.get('tipo', 'retiro')
+        'tipo_envio': tipo_envio,
+        'zona_envio': zona_envio
     }
 
     # Limpiar carrito y datos temporales
@@ -493,6 +581,9 @@ def pedido_confirmado():
 def enviar_correos_venta(comprador_email, comprador_nombre, items_str, total=None,
                          datos_cliente=None, metodo_pago='mercadopago',
                          subtotal=None, descuento=None, costo_envio=0, pedido_id=None):
+    # Suscribir automáticamente al cliente
+    suscribir_cliente(comprador_email, comprador_nombre)
+
     remitente_email = "somostejidosmargot@gmail.com"
     remitente_pass = "zrgu bcxr rkdh kqok"
     
@@ -680,75 +771,48 @@ def pago_exitoso():
     status = request.args.get('status')
     
     pedido = session.get('pedido_pendiente')
+    pagos_procesados = session.get('pagos_procesados', [])
     
     if payment_id and status == 'approved':
-        try:
-            if pedido:
-                pedido_id = pedido['pedido_id']
-                comprador_email = pedido['email']
-                comprador_nombre = pedido['nombre']
-                total = pedido['total']
-                subtotal = pedido['subtotal']
-                descuento = pedido['descuento']
-                costo_envio = pedido['costo_envio']
-                datos_cliente = {
-                    'nombre': comprador_nombre,
-                    'celular': pedido['celular'],
-                    'email': comprador_email,
-                    'direccion': session.get('datos_cliente', {}).get('direccion', ''),
-                    'cp': session.get('datos_cliente', {}).get('cp', '')
-                }
+        # Evitar doble procesamiento si recarga la página
+        if payment_id not in pagos_procesados:
+            try:
+                # Descontar stock
+                carrito = session.get('carrito', {})
+                if carrito:
+                    for key, item_data in carrito.items():
+                        nombre_base = item_data.get('nombre_base', key)
+                        qty = int(item_data.get('qty', 1))
+                        prod = Producto.query.filter(Producto.nombre.ilike(nombre_base)).first()
+                        if not prod and ' - ' in nombre_base:
+                            nombre_sin_color = nombre_base.split(' - ')[0]
+                            prod = Producto.query.filter(Producto.nombre.ilike(nombre_sin_color)).first()
+                        if prod:
+                            prod.stock = max(0, prod.stock - qty)
+                    db.session.commit()
                 
-                # Construir texto de items para el correo
-                items_list = []
-                for item in pedido['productos']:
-                    items_list.append(f"{item['qty']}x {item['descripcion']}")
-                items_str = "<br>".join(items_list)
-                
-                if comprador_email:
-                    enviar_correos_venta(
-                        comprador_email=comprador_email,
-                        comprador_nombre=comprador_nombre,
-                        items_str=items_str,
-                        total=total,
-                        subtotal=subtotal,
-                        descuento=descuento,
-                        costo_envio=costo_envio,
-                        datos_cliente=datos_cliente,
-                        metodo_pago='mercadopago',
-                        pedido_id=pedido_id
-                    )
-                
-                session['pedido_confirmado'] = pedido
-                session.pop('pedido_pendiente', None)
-            else:
-                # Fallback: consultar a MP por el pago
-                payment_info = mp_sdk.payment().get(payment_id)
-                if payment_info["status"] == 200:
-                    pago = payment_info["response"]
-                    comprador_email = pago.get("payer", {}).get("email", "")
-                    comprador_nombre = pago.get("payer", {}).get("first_name", "")
-                    if not comprador_nombre:
-                        comprador_nombre = comprador_email.split("@")[0] if "@" in comprador_email else "Cliente"
+                # Procesar pedido / envío de mails
+                if pedido:
+                    pedido_id = pedido['pedido_id']
+                    comprador_email = pedido['email']
+                    comprador_nombre = pedido['nombre']
+                    total = pedido['total']
+                    subtotal = pedido['subtotal']
+                    descuento = pedido['descuento']
+                    costo_envio = pedido['costo_envio']
+                    datos_cliente = {
+                        'nombre': comprador_nombre,
+                        'celular': pedido['celular'],
+                        'email': comprador_email,
+                        'direccion': session.get('datos_cliente', {}).get('direccion', ''),
+                        'cp': session.get('datos_cliente', {}).get('cp', '')
+                    }
                     
-                    total = pago.get("transaction_amount", 0)
-                    
-                    items_comprados = []
-                    productos_pedido = []
-                    for item in pago.get("additional_info", {}).get("items", []):
-                        qty = int(item.get('quantity', 1))
-                        title = item.get('title')
-                        price = float(item.get('unit_price', 0))
-                        items_comprados.append(f"{qty}x {title}")
-                        productos_pedido.append({
-                            "descripcion": title,
-                            "qty": qty,
-                            "precio": price
-                        })
-                    
-                    items_str = "<br>".join(items_comprados)
-                    datos_cliente = session.get('datos_cliente', {})
-                    pedido_id = request.args.get('pedido_id') or pago.get('external_reference') or uuid.uuid4().hex[:6].upper()
+                    # Construir texto de items para el correo
+                    items_list = []
+                    for item in pedido['productos']:
+                        items_list.append(f"{item['qty']}x {item['descripcion']}")
+                    items_str = "<br>".join(items_list)
                     
                     if comprador_email:
                         enviar_correos_venta(
@@ -756,27 +820,89 @@ def pago_exitoso():
                             comprador_nombre=comprador_nombre,
                             items_str=items_str,
                             total=total,
+                            subtotal=subtotal,
+                            descuento=descuento,
+                            costo_envio=costo_envio,
                             datos_cliente=datos_cliente,
                             metodo_pago='mercadopago',
                             pedido_id=pedido_id
                         )
-                    
-                    pedido = {
-                        'pedido_id': pedido_id,
-                        'nombre': comprador_nombre,
-                        'celular': datos_cliente.get('celular', ''),
-                        'email': comprador_email,
-                        'productos': productos_pedido,
-                        'subtotal': total,
-                        'descuento': 0,
-                        'costo_envio': 0,
-                        'total': total,
-                        'metodo_pago': 'mercadopago',
-                        'tipo_envio': 'retiro'
-                    }
-                    session['pedido_confirmado'] = pedido
-        except Exception as e:
-            print(f"Error procesando pago exitoso: {e}")
+                else:
+                    # Fallback si se perdió la sesión (no habrá carrito ni pedido)
+                    payment_info = mp_sdk.payment().get(payment_id)
+                    if payment_info["status"] == 200:
+                        pago = payment_info["response"]
+                        comprador_email = pago.get("payer", {}).get("email", "")
+                        comprador_nombre = pago.get("payer", {}).get("first_name", "")
+                        if not comprador_nombre:
+                            comprador_nombre = comprador_email.split("@")[0] if "@" in comprador_email else "Cliente"
+                        
+                        total = pago.get("transaction_amount", 0)
+                        
+                        items_comprados = []
+                        productos_pedido = []
+                        for item in pago.get("additional_info", {}).get("items", []):
+                            qty = int(item.get('quantity', 1))
+                            title = item.get('title')
+                            price = float(item.get('unit_price', 0))
+                            items_comprados.append(f"{qty}x {title}")
+                            productos_pedido.append({
+                                "descripcion": title,
+                                "qty": qty,
+                                "precio": price
+                            })
+                            
+                            # Descontar stock en fallback
+                            prod = Producto.query.filter(Producto.nombre.ilike(title)).first()
+                            if not prod and ' - ' in title:
+                                nombre_sin_color = title.split(' - ')[0]
+                                prod = Producto.query.filter(Producto.nombre.ilike(nombre_sin_color)).first()
+                            if prod:
+                                prod.stock = max(0, prod.stock - qty)
+                        db.session.commit()
+                        
+                        items_str = "<br>".join(items_comprados)
+                        datos_cliente = session.get('datos_cliente', {})
+                        pedido_id = request.args.get('pedido_id') or pago.get('external_reference') or uuid.uuid4().hex[:6].upper()
+                        
+                        if comprador_email:
+                            enviar_correos_venta(
+                                comprador_email=comprador_email,
+                                comprador_nombre=comprador_nombre,
+                                items_str=items_str,
+                                total=total,
+                                datos_cliente=datos_cliente,
+                                metodo_pago='mercadopago',
+                                pedido_id=pedido_id
+                            )
+                        
+                        pedido = {
+                            'pedido_id': pedido_id,
+                            'nombre': comprador_nombre,
+                            'celular': datos_cliente.get('celular', ''),
+                            'email': comprador_email,
+                            'productos': productos_pedido,
+                            'subtotal': total,
+                            'descuento': 0,
+                            'costo_envio': 0,
+                            'total': total,
+                            'metodo_pago': 'mercadopago',
+                            'tipo_envio': 'retiro'
+                        }
+                
+                # Registrar este pago como procesado
+                pagos_procesados.append(payment_id)
+                session['pagos_procesados'] = pagos_procesados
+                session.modified = True
+                
+            except Exception as e:
+                print(f"Error procesando pago exitoso: {e}")
+                
+        # Asegurarnos de que el pedido_confirmado esté disponible para renderizar
+        if pedido:
+            session['pedido_confirmado'] = pedido
+            session.pop('pedido_pendiente', None)
+            session.modified = True
 
     session.pop('carrito', None)
     session.pop('datos_cliente', None)
@@ -823,7 +949,9 @@ def admin_dashboard():
         if p.nombre:
             letras.add(p.nombre[0].upper())
     letras_iniciales = sorted(list(letras))
-    return render_template('admin.html', productos=productos, letras_iniciales=letras_iniciales)
+    suscriptores = Suscriptor.query.order_by(Suscriptor.fecha_registro.desc()).all()
+    tarifas_list = TarifaEnvio.query.all()
+    return render_template('admin.html', productos=productos, letras_iniciales=letras_iniciales, suscriptores=suscriptores, tarifas_list=tarifas_list)
 
 @app.route('/admin/add', methods=['POST'])
 @login_required
@@ -1208,6 +1336,38 @@ def admin_delete_color(id):
         return {'success': True, 'message': f'Color "{nombre}" eliminado correctamente.'}
         
     flash(f'Color "{nombre}" eliminado.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/eliminar_suscriptor/<int:id>', methods=['POST'])
+@login_required
+def admin_eliminar_suscriptor(id):
+    suscriptor = Suscriptor.query.get_or_404(id)
+    email = suscriptor.email
+    db.session.delete(suscriptor)
+    db.session.commit()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+        return {'success': True, 'message': f'Suscriptor "{email}" eliminado correctamente.'}
+        
+    flash(f'Suscriptor "{email}" eliminado.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/update_shipping_rates', methods=['POST'])
+@login_required
+def admin_update_shipping_rates():
+    for key, value in request.form.items():
+        if key.startswith('rate_'):
+            try:
+                rate_id = int(key.split('_')[1])
+                costo_clean = value.replace('.', '').replace(',', '')
+                costo = float(costo_clean)
+                tarifa = TarifaEnvio.query.get(rate_id)
+                if tarifa:
+                    tarifa.costo = costo
+            except Exception as e:
+                print(f"Error actualizando tarifa: {e}")
+    db.session.commit()
+    flash("Tarifas de envío actualizadas correctamente.", "success")
     return redirect(url_for('admin_dashboard'))
 
 @app.context_processor
