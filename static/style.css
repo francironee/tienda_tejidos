@@ -956,7 +956,7 @@ footer {
     font-size: 1.05rem;
     line-height: 1.8;
     color: var(--color-slate);
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     font-weight: 300;
     white-space: pre-line;
 }
@@ -965,7 +965,7 @@ footer {
 }
 
 .boutique-colors {
-    margin-bottom: 16px;
+    margin-bottom: 8px;
     padding: 8px 0;
     border-top: 1px solid #efe5dc;
     border-bottom: 1px solid #efe5dc;
@@ -1786,7 +1786,7 @@ footer {
         gap: 10px !important;
     }
 
-    #modal-body-scroll input, 
+    #modal-body-scroll input,
     #modal-body-scroll textarea {
         padding: 10px 12px !important;
         font-size: 0.82rem !important;
@@ -2103,4 +2103,4 @@ footer {
 }
 .cart-icon:hover .cart-badge {
     animation: cartWiggle 0.8s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-}
+}

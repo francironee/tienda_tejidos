@@ -367,21 +367,44 @@ def checkout_mp():
     
     # Agregar costo de envío si existe
     envio_info = session.get('envio', {})
-    if envio_info.get('costo', 0) > 0:
+    costo_envio = float(envio_info.get('costo', 0))
+    if costo_envio > 0:
         items.append({
             "title": f"Envío - {envio_info.get('zona', 'A domicilio')}",
             "quantity": 1,
-            "unit_price": float(envio_info['costo']),
+            "unit_price": costo_envio,
             "currency_id": "ARS"
         })
+        
+    pedido_id = uuid.uuid4().hex[:6].upper()
+    subtotal = sum(item['precio'] * item['qty'] for item in session['carrito'].values())
+    total = subtotal + costo_envio
+    
+    # Guardar en sesión como pedido pendiente
+    session['pedido_pendiente'] = {
+        'pedido_id': pedido_id,
+        'nombre': datos_cliente.get('nombre', 'Cliente'),
+        'celular': datos_cliente.get('celular', ''),
+        'email': datos_cliente.get('email', ''),
+        'productos': [{"descripcion": nombre, "qty": data['qty'], "precio": data['precio']} for nombre, data in session['carrito'].items()],
+        'subtotal': subtotal,
+        'descuento': 0,
+        'costo_envio': costo_envio,
+        'total': total,
+        'metodo_pago': 'mercadopago',
+        'tipo_envio': envio_info.get('tipo', 'retiro')
+    }
+    session.modified = True
         
     preference_data = {
         "items": items,
         "back_urls": {
-            "success": BASE_URL + "/pago_exitoso",
+            "success": BASE_URL + f"/pago_exitoso?pedido_id={pedido_id}",
             "failure": BASE_URL + "/carrito",
             "pending": BASE_URL + "/carrito"
-        }
+        },
+        "external_reference": pedido_id,
+        "auto_return": "approved"
     }
     
     try:
@@ -495,10 +518,11 @@ def enviar_correos_venta(comprador_email, comprador_nombre, items_str, total=Non
     # --- Bloque de resumen de precios ---
     if subtotal is not None and descuento is not None:
         total_display = total or (subtotal - descuento + costo_envio)
+        descuento_html = f'<tr><td style="padding:6px 0; color:#4CAF50; font-weight:600;">10% OFF</td><td style="text-align:right; color:#4CAF50; font-weight:600;">- $ {fmt(descuento)}</td></tr>' if descuento > 0 else ''
         precio_html = f"""
         <table style="width:100%; font-family: Arial, sans-serif; font-size: 0.95rem; border-collapse: collapse;">
             <tr><td style="padding:6px 0; color:#555;">Subtotal</td><td style="text-align:right;">$ {fmt(subtotal)}</td></tr>
-            <tr><td style="padding:6px 0; color:#4CAF50; font-weight:600;">10% OFF</td><td style="text-align:right; color:#4CAF50; font-weight:600;">- $ {fmt(descuento)}</td></tr>
+            {descuento_html}
             {'<tr><td style="padding:6px 0; color:#555;">Envío</td><td style="text-align:right;">$ ' + fmt(costo_envio) + '</td></tr>' if costo_envio > 0 else ''}
             <tr style="border-top: 2px solid #E8D9CD;"><td style="padding:10px 0; font-weight:700; color:#523D35; font-size:1.1rem;">TOTAL</td><td style="text-align:right; font-weight:700; color:#523D35; font-size:1.1rem;">$ {fmt(total_display)}</td></tr>
         </table>
@@ -655,28 +679,31 @@ def pago_exitoso():
     payment_id = request.args.get('payment_id')
     status = request.args.get('status')
     
+    pedido = session.get('pedido_pendiente')
+    
     if payment_id and status == 'approved':
         try:
-            # Consultar a MP
-            payment_info = mp_sdk.payment().get(payment_id)
-            if payment_info["status"] == 200:
-                pago = payment_info["response"]
-                comprador_email = pago.get("payer", {}).get("email", "")
+            if pedido:
+                pedido_id = pedido['pedido_id']
+                comprador_email = pedido['email']
+                comprador_nombre = pedido['nombre']
+                total = pedido['total']
+                subtotal = pedido['subtotal']
+                descuento = pedido['descuento']
+                costo_envio = pedido['costo_envio']
+                datos_cliente = {
+                    'nombre': comprador_nombre,
+                    'celular': pedido['celular'],
+                    'email': comprador_email,
+                    'direccion': session.get('datos_cliente', {}).get('direccion', ''),
+                    'cp': session.get('datos_cliente', {}).get('cp', '')
+                }
                 
-                comprador_nombre = pago.get("payer", {}).get("first_name", "")
-                if not comprador_nombre:
-                    comprador_nombre = comprador_email.split("@")[0] if "@" in comprador_email else "Cliente"
-                
-                total = pago.get("transaction_amount", 0)
-                
-                items_comprados = []
-                for item in pago.get("additional_info", {}).get("items", []):
-                    items_comprados.append(f"{item.get('quantity')}x {item.get('title')}")
-                
-                items_str = "<br>".join(items_comprados)
-                
-                # Recuperar datos del cliente ingresados en el formulario
-                datos_cliente = session.get('datos_cliente', {})
+                # Construir texto de items para el correo
+                items_list = []
+                for item in pedido['productos']:
+                    items_list.append(f"{item['qty']}x {item['descripcion']}")
+                items_str = "<br>".join(items_list)
                 
                 if comprador_email:
                     enviar_correos_venta(
@@ -684,15 +711,89 @@ def pago_exitoso():
                         comprador_nombre=comprador_nombre,
                         items_str=items_str,
                         total=total,
+                        subtotal=subtotal,
+                        descuento=descuento,
+                        costo_envio=costo_envio,
                         datos_cliente=datos_cliente,
-                        metodo_pago='mercadopago'
+                        metodo_pago='mercadopago',
+                        pedido_id=pedido_id
                     )
+                
+                session['pedido_confirmado'] = pedido
+                session.pop('pedido_pendiente', None)
+            else:
+                # Fallback: consultar a MP por el pago
+                payment_info = mp_sdk.payment().get(payment_id)
+                if payment_info["status"] == 200:
+                    pago = payment_info["response"]
+                    comprador_email = pago.get("payer", {}).get("email", "")
+                    comprador_nombre = pago.get("payer", {}).get("first_name", "")
+                    if not comprador_nombre:
+                        comprador_nombre = comprador_email.split("@")[0] if "@" in comprador_email else "Cliente"
+                    
+                    total = pago.get("transaction_amount", 0)
+                    
+                    items_comprados = []
+                    productos_pedido = []
+                    for item in pago.get("additional_info", {}).get("items", []):
+                        qty = int(item.get('quantity', 1))
+                        title = item.get('title')
+                        price = float(item.get('unit_price', 0))
+                        items_comprados.append(f"{qty}x {title}")
+                        productos_pedido.append({
+                            "descripcion": title,
+                            "qty": qty,
+                            "precio": price
+                        })
+                    
+                    items_str = "<br>".join(items_comprados)
+                    datos_cliente = session.get('datos_cliente', {})
+                    pedido_id = request.args.get('pedido_id') or pago.get('external_reference') or uuid.uuid4().hex[:6].upper()
+                    
+                    if comprador_email:
+                        enviar_correos_venta(
+                            comprador_email=comprador_email,
+                            comprador_nombre=comprador_nombre,
+                            items_str=items_str,
+                            total=total,
+                            datos_cliente=datos_cliente,
+                            metodo_pago='mercadopago',
+                            pedido_id=pedido_id
+                        )
+                    
+                    pedido = {
+                        'pedido_id': pedido_id,
+                        'nombre': comprador_nombre,
+                        'celular': datos_cliente.get('celular', ''),
+                        'email': comprador_email,
+                        'productos': productos_pedido,
+                        'subtotal': total,
+                        'descuento': 0,
+                        'costo_envio': 0,
+                        'total': total,
+                        'metodo_pago': 'mercadopago',
+                        'tipo_envio': 'retiro'
+                    }
+                    session['pedido_confirmado'] = pedido
         except Exception as e:
             print(f"Error procesando pago exitoso: {e}")
 
     session.pop('carrito', None)
     session.pop('datos_cliente', None)
-    return render_template('pago_exitoso.html')
+    session.pop('envio', None)
+    session.modified = True
+    
+    pedido_mostrar = session.get('pedido_confirmado')
+    session.pop('pedido_confirmado', None)
+    session.modified = True
+    
+    if not pedido_mostrar:
+        if pedido:
+            pedido_mostrar = pedido
+        else:
+            return redirect(url_for('inicio'))
+            
+    return render_template('pago_exitoso.html', pedido=pedido_mostrar)
 
 # --- RUTAS DE ADMINISTRACIÓN ---
 
