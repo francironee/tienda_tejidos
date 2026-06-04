@@ -1253,43 +1253,28 @@ footer {
 
 /* Related Products */
 .related-products-section {
-    padding: 4rem 2rem 6rem 2rem;
+    padding: 4rem 2rem;
     border-top: 1px solid var(--color-cream);
-    margin-top: 60px;
+    margin-top: 40px;
 }
 
 .related-products-title {
     text-align: center;
     font-family: 'Playfair Display', serif;
-    font-size: 2.4rem;
-    font-weight: 400;
+    font-size: 2.2rem;
     color: var(--color-brown);
-    margin-bottom: 45px;
-    letter-spacing: 1px;
+    margin-bottom: 40px;
 }
 
 .related-catalogo {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 30px;
-    max-width: 1400px;
-    margin: 0 auto;
-}
-
-.related-catalogo a {
-    flex: 0 1 calc(20% - 24px); /* 5 columns: (4 * 30px) / 5 = 24px */
-    min-width: 220px;
-    max-width: 260px;
-    text-decoration: none;
-    color: inherit;
-    display: block;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
 }
 
 .related-producto {
     box-shadow: none;
     border: 1px solid var(--color-cream);
-    width: 100%;
 }
 
 .related-producto-img {
@@ -1322,23 +1307,13 @@ footer {
     }
 }
 
-@media (max-width: 1100px) {
-    .related-catalogo {
-        gap: 24px;
-    }
-    .related-catalogo a {
-        flex: 0 1 calc(25% - 18px); /* 4 columns: (3 * 24px) / 4 = 18px */
-        max-width: 240px;
-    }
-    .related-catalogo a:nth-child(n+5) {
-        display: none;
-    }
-}
-
 @media (max-width: 900px) {
     .catalogo {
         grid-template-columns: repeat(3, 1fr);
         gap: 25px;
+    }
+    .related-catalogo {
+        grid-template-columns: repeat(2, 1fr);
     }
     #destacados .producto:nth-child(n+4) {
         display: none;
@@ -1346,7 +1321,9 @@ footer {
 }
 
 @media (max-width: 500px) {
-    /* related products grid handled in mobile media query */
+    .related-catalogo {
+        grid-template-columns: repeat(1, 1fr);
+    }
 }
 
 /* Cart UI */
@@ -2025,27 +2002,18 @@ footer {
        "TAMBIÉN PODRÍAN INTERESARTE" — 2 columnas en mobile
        ============================================= */
     .related-products-section {
-        margin-top: 40px;
-        padding: 3rem 1.5rem;
+        margin-top: 20px;
+        padding: 2rem 1rem;
     }
 
     .related-products-title {
-        font-size: 1.6rem;
-        margin-bottom: 25px;
-        letter-spacing: 0.5px;
+        font-size: 1.2rem;
+        margin-bottom: 15px;
     }
 
     .related-catalogo {
-        gap: 16px;
-    }
-    
-    .related-catalogo a {
-        flex: 0 1 calc(33.333% - 11px); /* 3 columns: (2 * 16px) / 3 = 10.66px, round to 11px */
-        max-width: 200px;
-    }
-
-    .related-catalogo a:nth-child(n+4) {
-        display: none;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px;
     }
 
     .related-producto-img {
@@ -2059,19 +2027,6 @@ footer {
 
     .related-producto-info .precio {
         font-size: 0.8rem;
-    }
-
-    @media (max-width: 480px) {
-        .related-catalogo {
-            gap: 12px;
-        }
-        .related-catalogo a {
-            flex: 0 1 calc(50% - 6px); /* 2 columns: (1 * 12px) / 2 = 6px */
-            max-width: 170px;
-        }
-        .related-catalogo a:nth-child(n+3) {
-            display: none;
-        }
     }
 
     /* =============================================
