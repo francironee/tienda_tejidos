@@ -79,14 +79,6 @@
                             <div style="font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--color-sage);">Tarifa según Código Postal (CP)</div>
                         </div>
                     </label>
-                    
-                    <!-- Mensaje de envío (solo visible si selecciona envío) -->
-                    <div id="mensaje-envio-info" style="display: none; padding: 10px; background: #fff; border-radius: 4px;">
-                        <p style="margin: 0; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--color-brown); line-height: 1.4;">
-                            <i class="fa-solid fa-info-circle" style="color: var(--color-sage); margin-right: 5px;"></i>
-                            El precio y método de envío se coordina por privado una vez finalizada la compra.
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>
@@ -115,9 +107,9 @@
 
 <script id="tarifas-envio-data" type="application/json">
     {
-        "CABA": {{ tarifas['CABA Estándar'] | default(4500.0) | int }},
-        "GBA": {{ tarifas['Buenos Aires / GBA'] | default(6500.0) | int }},
-        "NACIONAL": {{ tarifas['Nacional (Resto del país)'] | default(8500.0) | int }}
+        "CABA": {{ tarifas['CABA'] | default(4500.0) | int }},
+        "GBA": {{ tarifas['Buenos Aires/GBA'] | default(6500.0) | int }},
+        "NACIONAL": {{ tarifas['Nacional'] | default(8500.0) | int }}
     }
 </script>
 
@@ -224,7 +216,7 @@
     const tarifas = scriptTarifas ? JSON.parse(scriptTarifas.textContent) : { CABA: 4500, GBA: 6500, NACIONAL: 8500 };
 
     window.calcularEnvioPorCP = function(cpRaw) {
-        if (!cpRaw) return { costo: 0, zona: 'A coordinar', esGratisCercania: false };
+        if (!cpRaw) return { costo: 0, zona: '', esGratisCercania: false };
         
         const cp = cpRaw.trim().toUpperCase();
         const matchNum = cp.match(/\d{4}/);
@@ -233,12 +225,12 @@
         // 1. Cercanía (Showroom)
         const cercaniaCPs = [1417, 1419, 1431, 1425, 1430, 1416, 1407];
         if (cpNum && cercaniaCPs.includes(cpNum)) {
-            return { costo: 0, zona: 'Envío Gratis por Cercanía (Showroom)', esGratisCercania: true };
+            return { costo: 0, zona: 'Gratis por Cercanía', esGratisCercania: true };
         }
         
         // 2. CABA
         if (cp.startsWith('C') || (cpNum && cpNum >= 1000 && cpNum <= 1499)) {
-            return { costo: tarifas.CABA, zona: 'CABA Estándar', esGratisCercania: false };
+            return { costo: tarifas.CABA, zona: 'CABA', esGratisCercania: false };
         }
         
         // 3. Buenos Aires / GBA
@@ -247,7 +239,7 @@
         }
         
         // 4. Nacional
-        return { costo: tarifas.NACIONAL, zona: 'Nacional (Resto del país)', esGratisCercania: false };
+        return { costo: tarifas.NACIONAL, zona: 'Nacional', esGratisCercania: false };
     };
 
     function actualizarResumenPrecio() {
@@ -287,9 +279,9 @@
                 
                 if (spanEnvio) {
                     if (esGratisCercania) {
-                        spanEnvio.innerHTML = '<span style="color:#2e7d32; font-weight:700;">Envío Gratis por Cercanía (Showroom)</span>';
+                        spanEnvio.innerHTML = '<span style="color:#2e7d32; font-weight:700;">Gratis</span>';
                     } else if (costoEnvio === 0) {
-                        spanEnvio.innerText = 'Ingresar CP';
+                        spanEnvio.innerText = 'Ingresá CP';
                         spanEnvio.style.color = 'var(--color-taupe)';
                     } else {
                         spanEnvio.innerText = '$ ' + formatMoney(costoEnvio);
@@ -623,7 +615,7 @@
                     <span id="resumen-descuento"></span>
                 </div>
                 <div class="resumen-precio-row" id="resumen-envio-row" style="display:none;">
-                    <span>&#x1F4E6; Envío (<span id="resumen-envio-zona">Estándar</span>)</span>
+                    <span>&#x1F4E6; Envío <span id="resumen-envio-zona">Estándar</span></span>
                     <span id="resumen-envio" style="color:var(--color-slate); font-weight:600;">$ 0</span>
                 </div>
                 <div class="resumen-precio-row total-row">

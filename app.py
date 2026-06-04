@@ -168,11 +168,30 @@ def init_db():
                 pass
         
         db.create_all()
+
+        # Migración de nombres antiguos de zonas de envío en la base de datos
+        try:
+            caba_old = TarifaEnvio.query.filter_by(zona='CABA Estándar').first()
+            if caba_old:
+                caba_old.zona = 'CABA'
+            
+            gba_old = TarifaEnvio.query.filter_by(zona='Buenos Aires / GBA').first()
+            if gba_old:
+                gba_old.zona = 'Buenos Aires/GBA'
+                
+            nacional_old = TarifaEnvio.query.filter_by(zona='Nacional (Resto del país)').first()
+            if nacional_old:
+                nacional_old.zona = 'Nacional'
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error en migración de tarifas: {e}")
+
         if not TarifaEnvio.query.first():
             tarifas_iniciales = [
-                TarifaEnvio(zona='CABA Estándar', costo=4500.0),
-                TarifaEnvio(zona='Buenos Aires / GBA', costo=6500.0),
-                TarifaEnvio(zona='Nacional (Resto del país)', costo=8500.0)
+                TarifaEnvio(zona='CABA', costo=4500.0),
+                TarifaEnvio(zona='Buenos Aires/GBA', costo=6500.0),
+                TarifaEnvio(zona='Nacional', costo=8500.0)
             ]
             for t in tarifas_iniciales:
                 db.session.add(t)
@@ -395,20 +414,20 @@ def calcular_costo_envio_backend(cp_raw, tipo_envio):
     
     # Obtener tarifas de la base de datos
     tarifas = {t.zona: t.costo for t in TarifaEnvio.query.all()}
-    caba_costo = tarifas.get('CABA Estándar', 4500.0)
-    gba_costo = tarifas.get('Buenos Aires / GBA', 6500.0)
-    nacional_costo = tarifas.get('Nacional (Resto del país)', 8500.0)
+    caba_costo = tarifas.get('CABA', 4500.0)
+    gba_costo = tarifas.get('Buenos Aires/GBA', 6500.0)
+    nacional_costo = tarifas.get('Nacional', 8500.0)
     
     # 2. CABA Estándar
     if cp.startswith('C') or (cp_num and 1000 <= cp_num <= 1499):
-        return caba_costo, 'CABA Estándar'
+        return caba_costo, 'CABA'
     
     # 3. Buenos Aires / GBA
     if cp.startswith('B') or (cp_num and (1600 <= cp_num <= 1999 or 6000 <= cp_num <= 8999)):
-        return gba_costo, 'Buenos Aires / GBA'
+        return gba_costo, 'Buenos Aires/GBA'
     
     # 4. Nacional
-    return nacional_costo, 'Nacional (Resto del país)'
+    return nacional_costo, 'Nacional'
 
 @app.route('/checkout', methods=['POST'])
 def checkout_mp():
