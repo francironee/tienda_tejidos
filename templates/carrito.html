@@ -76,7 +76,13 @@
                         <input type="radio" name="tipo_envio" id="envio" value="envio" onchange="seleccionarEnvio('envio')" style="margin: 0;">
                         <div style="flex: 1;">
                             <div style="font-family: 'Montserrat', sans-serif; font-weight: 600; color: var(--color-brown);">Envío a domicilio</div>
-                            <div style="font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--color-sage);">Tarifa según Código Postal (CP)</div>
+                            <div id="envio-tarifa-desc" style="font-family: 'Montserrat', sans-serif; font-size: 0.75rem; color: var(--color-sage);">
+                                {% if total >= 350000 %}
+                                    <strong>¡Gratis!</strong> (Compra mayor a $350.000)
+                                {% else %}
+                                    Tarifa según Código Postal (CP)
+                                {% endif %}
+                            </div>
                         </div>
                     </label>
                 </div>
@@ -134,10 +140,27 @@
                     let formattedSubtotal = data.item_subtotal.toLocaleString('es-AR');
                     document.getElementById('subtotal-' + index).innerText = '$ ' + formattedSubtotal.replace(/,/g, '.');
                 }
+                
+                // Actualizar subtotalBase local
+                subtotalBase = data.cart_total;
+                
+                // Actualizar la etiqueta del envío
+                const envioDesc = document.getElementById('envio-tarifa-desc');
+                if (envioDesc) {
+                    if (subtotalBase >= 350000) {
+                        envioDesc.innerHTML = '<strong>¡Gratis!</strong> (Compra mayor a $350.000)';
+                    } else {
+                        envioDesc.innerText = 'Tarifa según Código Postal (CP)';
+                    }
+                }
+                
                 let formattedTotal = data.cart_total.toLocaleString('es-AR');
                 document.getElementById('cart-total-amount').innerText = '$ ' + formattedTotal.replace(/,/g, '.');
                 const badge = document.querySelector('.cart-badge');
                 if (badge) badge.textContent = data.cart_count;
+                
+                // Forzar actualización del resumen del modal de checkout
+                actualizarResumenPrecio();
             }
         })
         .catch(err => console.error(err));
@@ -195,7 +218,7 @@
 
     let metodoPagoSeleccionado = 'mercadopago';
     const DESCUENTO = 0.10;
-    const subtotalBase = {{ total }};
+    let subtotalBase = {{ total }};
 
     window.seleccionarMetodoPago = function(metodo) {
         if (metodo === 'efectivo' && tipoEnvioSeleccionado === 'envio') return;
@@ -217,6 +240,11 @@
 
     window.calcularEnvioPorCP = function(cpRaw) {
         if (!cpRaw) return { costo: 0, zona: '', esGratisCercania: false };
+        
+        // Si el subtotal supera el umbral, el envío es gratuito
+        if (subtotalBase >= 350000) {
+            return { costo: 0, zona: 'Gratis', esGratisCercania: true };
+        }
         
         const cp = cpRaw.trim().toUpperCase();
         const matchNum = cp.match(/\d{4}/);
@@ -275,7 +303,13 @@
         if (filaEnvio) {
             if (tipoEnvioSeleccionado === 'envio') {
                 filaEnvio.style.display = 'flex';
-                if (spanEnvioZona) spanEnvioZona.innerText = envioZona;
+                if (spanEnvioZona) {
+                    if (envioZona === 'Gratis') {
+                        spanEnvioZona.innerText = '';
+                    } else {
+                        spanEnvioZona.innerText = ' - ' + envioZona;
+                    }
+                }
                 
                 if (spanEnvio) {
                     if (esGratisCercania) {

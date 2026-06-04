@@ -2104,3 +2104,78 @@ footer {
 .cart-icon:hover .cart-badge {
     animation: cartWiggle 0.8s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
+
+/* --- Announcement Bar --- */
+.announcement-bar {
+    width: 100%;
+    background-color: rgba(232, 217, 205, 0.35); /* Crema muy suave */
+    border-top: 1px solid rgba(82, 61, 53, 0.08);
+    border-bottom: 1px solid rgba(82, 61, 53, 0.08);
+    height: 44px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    z-index: 5;
+}
+
+.announcement-item {
+    position: absolute;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-brown);
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 0 20px;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.announcement-item.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    transition-delay: 0.4s; /* Esperar a que el elemento anterior termine de desaparecer */
+}
+
+@media (max-width: 768px) {
+    .announcement-bar {
+        height: 40px;
+    }
+    .announcement-item {
+        font-size: 0.66rem;
+        letter-spacing: 1.8px;
+        white-space: normal;
+        line-height: 1.3;
+    }
+}
+
+/* --- Precio Descuento por Transferencia --- */
+.precio-transfer-descuento {
+    display: inline-block;
+    font-size: 0.72em; /* Proporcional al tamaño de fuente padre */
+    font-weight: 500;
+    color: #887a70; /* Color taupe/gris de la etiqueta de abajo */
+    margin-left: 6px;
+    font-family: 'Montserrat', sans-serif;
+    vertical-align: middle;
+    letter-spacing: 0.5px;
+    opacity: 0.8;
+}
+
+.precio-transfer-label {
+    font-size: 0.85em; /* Proporcional al texto del precio descontado */
+    text-transform: lowercase;
+    opacity: 0.75;
+    margin-left: 2px;
+    font-weight: 500;
+}
+
+

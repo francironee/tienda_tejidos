@@ -389,11 +389,23 @@ def guardar_datos_cliente():
 @app.route('/guardar_envio', methods=['POST'])
 def guardar_envio():
     data = request.get_json()
+    tipo = data.get('tipo', 'retiro')
+    costo = data.get('costo', 0)
+    zona = data.get('zona', '')
+    cp = data.get('cp', '')
+    
+    # Si la compra supera los 350.000, forzamos envío gratuito
+    carrito = session.get('carrito', {})
+    subtotal = sum(item['precio'] * item['qty'] for item in carrito.values())
+    if subtotal >= 350000 and tipo == 'envio':
+        costo = 0.0
+        zona = 'Gratis'
+        
     session['envio'] = {
-        'tipo': data.get('tipo', 'retiro'),
-        'costo': data.get('costo', 0),
-        'zona': data.get('zona', ''),
-        'cp': data.get('cp', '')
+        'tipo': tipo,
+        'costo': costo,
+        'zona': zona,
+        'cp': cp
     }
     session.modified = True
     return {'ok': True}
@@ -401,6 +413,12 @@ def guardar_envio():
 def calcular_costo_envio_backend(cp_raw, tipo_envio):
     if tipo_envio != 'envio' or not cp_raw:
         return 0.0, 'Retiro showroom'
+        
+    # Si la compra supera los 350.000, forzamos envío gratuito
+    carrito = session.get('carrito', {})
+    subtotal = sum(item['precio'] * item['qty'] for item in carrito.values())
+    if subtotal >= 350000:
+        return 0.0, 'Gratis'
     
     cp = cp_raw.strip().upper()
     import re
