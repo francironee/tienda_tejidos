@@ -123,6 +123,12 @@
                 <span>Subtotal</span>
                 <span>$ {{ "{:,.0f}".format(pedido.subtotal).replace(',', '.') }}</span>
             </div>
+            {% if pedido.recargo and pedido.recargo > 0 %}
+            <div class="precio-row" style="color: var(--color-slate); font-weight: 600;">
+                <span>💳 Recargo Tarjetas (10%)</span>
+                <span>+ $ {{ "{:,.0f}".format(pedido.recargo).replace(',', '.') }}</span>
+            </div>
+            {% endif %}
             {% if pedido.descuento > 0 %}
             <div class="precio-row descuento">
                 <span><i class="fa-solid fa-tag" style="margin-right: 6px;"></i>10% OFF</span>

@@ -664,6 +664,7 @@
 
                         <div class="form-group">
                             <label class="form-label">Precio ($):</label>
+                            <span class="form-help">Ingresá el precio para efectivo o transferencia. El sistema calculará el 10% de recargo para tarjetas automáticamente.</span>
                             <input type="text" name="precio" value="{{ '{:,.0f}'.format(p.precio).replace(',', '.') }}" class="form-input price-formatter-input" required>
                         </div>
 
@@ -790,6 +791,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Precio ($):</label>
+                            <span class="form-help">Ingresá el precio para efectivo o transferencia. El sistema calculará el 10% de recargo para tarjetas automáticamente.</span>
                             <input type="text" name="precio" class="form-input price-formatter-input" required placeholder="Ej: 180.000">
                         </div>
                     </div>

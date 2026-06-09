@@ -33,11 +33,11 @@
             <h1 class="boutique-title">{{ item.nombre }}</h1>
             <p class="boutique-price">
                 $ {{ "{:,.0f}".format(item.precio).replace(',', '.') }}
-                <span class="precio-transfer-descuento">$ {{ "{:,.0f}".format(item.precio * 0.9).replace(',', '.') }}*</span>
+                <span class="precio-transfer-descuento">/ $ {{ "{:,.0f}".format(item.precio * 1.10).replace(',', '.') }} con tarjeta</span>
             </p>
             <p style="font-family: 'Montserrat', sans-serif; font-size: 0.74rem; color: #887a70; margin: -12px 0 20px 0; font-weight: 500; letter-spacing: 0.5px; display: flex; align-items: center; gap: 5px;">
-                <i class="fa-solid fa-tag" style="color: #2e7d32; font-size: 0.8rem;"></i>
-                <span><strong>10% OFF</strong> pagando con transferencia o efectivo*</span>
+                <i class="fa-solid fa-money-bill-wave" style="color: #2e7d32; font-size: 0.8rem;"></i>
+                <span>Precio especial pagando con <strong>transferencia o efectivo</strong>*</span>
             </p>
             
             <div class="boutique-stock-status {% if item.stock == 0 %}out-of-stock{% endif %}">

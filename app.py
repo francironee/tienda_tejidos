@@ -460,13 +460,13 @@ def checkout_mp():
     if metodo_pago in ('transferencia', 'efectivo'):
         return checkout_alternativo(metodo_pago)
 
-    # Flujo Mercado Pago
+    # Flujo Mercado Pago (con recargo de tarjeta del 10%)
     items = []
     for nombre, item_data in session['carrito'].items():
         items.append({
             "title": nombre,
             "quantity": int(item_data['qty']),
-            "unit_price": float(item_data['precio']),
+            "unit_price": round(float(item_data['precio']) * 1.10),
             "currency_id": "ARS"
         })
     
@@ -485,7 +485,8 @@ def checkout_mp():
         
     pedido_id = uuid.uuid4().hex[:6].upper()
     subtotal = sum(item['precio'] * item['qty'] for item in session['carrito'].values())
-    total = subtotal + costo_envio
+    recargo = round(subtotal * 0.10)
+    total = subtotal + recargo + costo_envio
     
     # Guardar en sesión como pedido pendiente
     session['pedido_pendiente'] = {
@@ -496,6 +497,7 @@ def checkout_mp():
         'productos': [{"descripcion": nombre, "qty": data['qty'], "precio": data['precio']} for nombre, data in session['carrito'].items()],
         'subtotal': subtotal,
         'descuento': 0,
+        'recargo': recargo,
         'costo_envio': costo_envio,
         'total': total,
         'metodo_pago': 'mercadopago',
@@ -526,9 +528,7 @@ def checkout_mp():
 
 
 def checkout_alternativo(metodo_pago):
-    """Procesa un pedido pagado por Transferencia o Efectivo con 10% de descuento."""
-    DESCUENTO_PORCENTAJE = 0.10
-
+    """Procesa un pedido pagado por Transferencia o Efectivo (sin recargo)."""
     carrito = session.get('carrito', {})
     datos_cliente = session.get('datos_cliente', {})
     envio_info = session.get('envio', {})
@@ -542,8 +542,8 @@ def checkout_alternativo(metodo_pago):
     tipo_envio = envio_info.get('tipo', 'retiro')
     costo_envio, zona_envio = calcular_costo_envio_backend(datos_cliente.get('cp'), tipo_envio)
     
-    descuento = round(subtotal * DESCUENTO_PORCENTAJE)
-    total = subtotal - descuento + costo_envio
+    descuento = 0
+    total = subtotal + costo_envio
 
     # Descontar stock
     for key, item_data in carrito.items():
@@ -577,7 +577,8 @@ def checkout_alternativo(metodo_pago):
             costo_envio=costo_envio,
             datos_cliente=datos_cliente,
             metodo_pago=metodo_pago,
-            pedido_id=pedido_id
+            pedido_id=pedido_id,
+            recargo=0
         )
 
     # Guardar datos del pedido confirmado en sesión para mostrarlo en la página
@@ -588,7 +589,8 @@ def checkout_alternativo(metodo_pago):
         'email': comprador_email,
         'productos': [{"descripcion": nombre, "qty": data['qty'], "precio": data['precio']} for nombre, data in carrito.items()],
         'subtotal': subtotal,
-        'descuento': descuento,
+        'descuento': 0,
+        'recargo': 0,
         'costo_envio': costo_envio,
         'total': total,
         'metodo_pago': metodo_pago,
@@ -617,7 +619,8 @@ def pedido_confirmado():
 
 def enviar_correos_venta(comprador_email, comprador_nombre, items_str, total=None,
                          datos_cliente=None, metodo_pago='mercadopago',
-                         subtotal=None, descuento=None, costo_envio=0, pedido_id=None):
+                         subtotal=None, descuento=None, costo_envio=0, pedido_id=None,
+                         recargo=None):
     # Suscribir automáticamente al cliente
     suscribir_cliente(comprador_email, comprador_nombre)
 
@@ -633,9 +636,9 @@ def enviar_correos_venta(comprador_email, comprador_nombre, items_str, total=Non
 
     # Nombres legibles de cada método de pago
     metodo_nombres = {
-        'mercadopago': 'Mercado Pago',
-        'transferencia': 'Transferencia Bancaria (10% OFF)',
-        'efectivo': 'Efectivo al retirar (10% OFF)'
+        'mercadopago': 'Mercado Pago (10% recargo)',
+        'transferencia': 'Transferencia Directa',
+        'efectivo': 'Efectivo al retirar'
     }
     metodo_label = metodo_nombres.get(metodo_pago, 'Mercado Pago')
 
@@ -644,13 +647,19 @@ def enviar_correos_venta(comprador_email, comprador_nombre, items_str, total=Non
         return '{:,.0f}'.format(n).replace(',', '.')
 
     # --- Bloque de resumen de precios ---
-    if subtotal is not None and descuento is not None:
-        total_display = total or (subtotal - descuento + costo_envio)
-        descuento_html = f'<tr><td style="padding:6px 0; color:#4CAF50; font-weight:600;">10% OFF</td><td style="text-align:right; color:#4CAF50; font-weight:600;">- $ {fmt(descuento)}</td></tr>' if descuento > 0 else ''
+    if subtotal is not None:
+        recargo_val = recargo if recargo is not None else (round(subtotal * 0.10) if metodo_pago == 'mercadopago' else 0)
+        descuento_val = descuento if descuento is not None else 0
+        total_display = total or (subtotal - descuento_val + recargo_val + costo_envio)
+        
+        descuento_html = f'<tr><td style="padding:6px 0; color:#4CAF50; font-weight:600;">10% OFF</td><td style="text-align:right; color:#4CAF50; font-weight:600;">- $ {fmt(descuento_val)}</td></tr>' if descuento_val > 0 else ''
+        recargo_html = f'<tr><td style="padding:6px 0; color:#523D35; font-weight:600;">Recargo Tarjeta (10%)</td><td style="text-align:right; color:#523D35; font-weight:600;">+ $ {fmt(recargo_val)}</td></tr>' if recargo_val > 0 else ''
+        
         precio_html = f"""
         <table style="width:100%; font-family: Arial, sans-serif; font-size: 0.95rem; border-collapse: collapse;">
             <tr><td style="padding:6px 0; color:#555;">Subtotal</td><td style="text-align:right;">$ {fmt(subtotal)}</td></tr>
             {descuento_html}
+            {recargo_html}
             {'<tr><td style="padding:6px 0; color:#555;">Envío</td><td style="text-align:right;">$ ' + fmt(costo_envio) + '</td></tr>' if costo_envio > 0 else ''}
             <tr style="border-top: 2px solid #E8D9CD;"><td style="padding:10px 0; font-weight:700; color:#523D35; font-size:1.1rem;">TOTAL</td><td style="text-align:right; font-weight:700; color:#523D35; font-size:1.1rem;">$ {fmt(total_display)}</td></tr>
         </table>
@@ -836,6 +845,7 @@ def pago_exitoso():
                     total = pedido['total']
                     subtotal = pedido['subtotal']
                     descuento = pedido['descuento']
+                    recargo = pedido.get('recargo', 0)
                     costo_envio = pedido['costo_envio']
                     datos_cliente = {
                         'nombre': comprador_nombre,
@@ -862,7 +872,8 @@ def pago_exitoso():
                             costo_envio=costo_envio,
                             datos_cliente=datos_cliente,
                             metodo_pago='mercadopago',
-                            pedido_id=pedido_id
+                            pedido_id=pedido_id,
+                            recargo=recargo
                         )
                 else:
                     # Fallback si se perdió la sesión (no habrá carrito ni pedido)
@@ -875,6 +886,8 @@ def pago_exitoso():
                             comprador_nombre = comprador_email.split("@")[0] if "@" in comprador_email else "Cliente"
                         
                         total = pago.get("transaction_amount", 0)
+                        recargo = round(total - (total / 1.10))
+                        subtotal = total - recargo
                         
                         items_comprados = []
                         productos_pedido = []
@@ -910,7 +923,8 @@ def pago_exitoso():
                                 total=total,
                                 datos_cliente=datos_cliente,
                                 metodo_pago='mercadopago',
-                                pedido_id=pedido_id
+                                pedido_id=pedido_id,
+                                recargo=recargo
                             )
                         
                         pedido = {
@@ -919,8 +933,9 @@ def pago_exitoso():
                             'celular': datos_cliente.get('celular', ''),
                             'email': comprador_email,
                             'productos': productos_pedido,
-                            'subtotal': total,
+                            'subtotal': subtotal,
                             'descuento': 0,
+                            'recargo': recargo,
                             'costo_envio': 0,
                             'total': total,
                             'metodo_pago': 'mercadopago',
